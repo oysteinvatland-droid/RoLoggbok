@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-club-navy: #1e3a5f;
+  --color-club-blue: #2563eb;
+  --color-club-water: #0ea5e9;
+  --color-club-green: #16a34a;
+  --color-club-br: rgb(43, 144, 86);
+  --color-club-amber: #d97706;
+  --color-club-red: #dc2626;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fafc;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Safe area for iPad notch/home indicator */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
