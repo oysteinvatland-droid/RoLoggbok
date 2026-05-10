@@ -20,6 +20,7 @@ export function StopSession({ boat, session, onClose }: Props) {
   const [coached, setCoached] = useState(false)
   const [reportIncident, setReportIncident] = useState(false)
   const [incidentDesc, setIncidentDesc] = useState('')
+  const [distanceKm, setDistanceKm] = useState('')
 
   const stopMutation = useStopSession()
   const { toast } = useToast()
@@ -42,6 +43,7 @@ export function StopSession({ boat, session, onClose }: Props) {
         has_been_coached: coached,
         incident_description: reportIncident ? incidentDesc.trim() : null,
         boat_id: boat.id,
+        distance_km: distanceKm ? parseFloat(distanceKm) : null,
       })
       toast('Tur avsluttet!')
       onClose()
@@ -80,7 +82,7 @@ export function StopSession({ boat, session, onClose }: Props) {
           </p>
           <p><span className="text-gray-500">Startet: </span>
             <span className="font-medium">
-              {format(new Date(session.start_time), 'HH:mm', { locale: nb })}
+              {format(new Date(session.start_time), 'dd.MM.yyyy HH:mm', { locale: nb })}
             </span>
           </p>
           <p><span className="text-gray-500">Varighet: </span>
@@ -98,6 +100,16 @@ export function StopSession({ boat, session, onClose }: Props) {
           type="datetime-local"
           value={endTime}
           onChange={e => setEndTime(e.target.value)}
+        />
+
+        <Input
+          label="Distanse (km)"
+          type="number"
+          min="0"
+          step="0.1"
+          placeholder="f.eks. 12.5"
+          value={distanceKm}
+          onChange={e => setDistanceKm(e.target.value)}
         />
 
         {/* Coached toggle */}

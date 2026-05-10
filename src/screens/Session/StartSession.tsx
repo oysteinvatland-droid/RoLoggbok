@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { format, addMinutes } from 'date-fns'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
@@ -7,7 +7,6 @@ import { useMembers } from '@/hooks/useMembers'
 import { useRoutes } from '@/hooks/useBoats'
 import { useStartSession } from '@/hooks/useSessions'
 import { useToast } from '@/components/ui/Toast'
-import { BOAT_TYPE_LABELS, BOAT_TYPE_CREW_SIZE } from '@/constants'
 import { clsx } from 'clsx'
 import type { Boat, Member } from '@/types'
 
@@ -29,33 +28,35 @@ interface Props {
 }
 
 export function StartSession({ boat, onClose }: Props) {
+  const crewSize = boat.boat_type?.crew_size ?? 1
+
   const [step, setStep] = useState<Step>('rowers')
-  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([])
+  const [seatSelections, setSeatSelections] = useState<(string | null)[]>(() => Array(crewSize).fill(null))
+  const [seatSearches, setSeatSearches] = useState<string[]>(() => Array(crewSize).fill(''))
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
-  const [startTime] = useState(() => format(new Date(), "yyyy-MM-dd'T'HH:mm"))
+  const [startTime, setStartTime] = useState(() => format(new Date(), "yyyy-MM-dd'T'HH:mm"))
   const [durationMinutes, setDurationMinutes] = useState(90)
   const [comment, setComment] = useState('')
-  const [search, setSearch] = useState('')
 
   const { data: members = [] } = useMembers()
   const { data: routes = [] } = useRoutes()
   const startMutation = useStartSession()
   const { toast } = useToast()
 
-  const crewSize = BOAT_TYPE_CREW_SIZE[boat.type]
-  const crewHint = crewSize > 0 ? `${crewSize} roer${crewSize !== 1 ? 'e' : ''}` : ''
+  const selectedMemberIds = seatSelections.filter((id): id is string => id !== null)
+  const allSeatsSelected = seatSelections.every(id => id !== null)
 
-  const filtered = useMemo(
-    () => members.filter(m =>
-      m.name.toLowerCase().includes(search.toLowerCase())
-    ),
-    [members, search]
-  )
+  function selectMember(seatIndex: number, memberId: string) {
+    setSeatSelections(prev => prev.map((v, j) => j === seatIndex ? memberId : v))
+    setSeatSearches(prev => prev.map((v, j) => j === seatIndex ? '' : v))
+  }
 
-  function toggleMember(id: string) {
-    setSelectedMemberIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    )
+  function clearSeat(seatIndex: number) {
+    setSeatSelections(prev => prev.map((v, j) => j === seatIndex ? null : v))
+  }
+
+  function updateSearch(seatIndex: number, value: string) {
+    setSeatSearches(prev => prev.map((v, j) => j === seatIndex ? value : v))
   }
 
   async function handleConfirm() {
@@ -95,7 +96,7 @@ export function StartSession({ boat, onClose }: Props) {
       isOpen
       onClose={onClose}
       title={`Start tur — ${boat.name}`}
-      size="md"
+      size="lg"
       footer={
         <>
           {step !== 'rowers' && (
@@ -107,7 +108,7 @@ export function StartSession({ boat, onClose }: Props) {
           {step !== 'review' ? (
             <Button
               variant="primary"
-              disabled={step === 'rowers' && selectedMemberIds.length === 0}
+              disabled={step === 'rowers' && !allSeatsSelected}
               onClick={() => setStep(steps[stepIndex + 1])}
             >
               Neste →
@@ -147,48 +148,60 @@ export function StartSession({ boat, onClose }: Props) {
 
       {/* Step: Rowers */}
       {step === 'rowers' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              {selectedMemberIds.length} valgt
-              {crewHint && ` · anbefalt: ${crewHint}`}
-            </p>
-          </div>
-          <Input
-            placeholder="Søk etter navn..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          <div className="space-y-2 max-h-72 overflow-y-auto">
-            {filtered.length === 0 && (
-              <p className="text-sm text-gray-400 text-center py-4">Ingen roere funnet.</p>
-            )}
-            {filtered.map((m: Member) => {
-              const selected = selectedMemberIds.includes(m.id)
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => toggleMember(m.id)}
-                  className={clsx(
-                    'w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition',
-                    selected
-                      ? 'border-club-blue bg-blue-50 text-club-navy'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  )}
-                >
-                  <div className={clsx(
-                    'w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0',
-                    selected ? 'border-club-blue bg-club-blue' : 'border-gray-300'
-                  )}>
-                    {selected && <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>}
+        <div
+          className="grid gap-4"
+          style={{ gridTemplateColumns: `repeat(${Math.min(crewSize, 4)}, minmax(0, 1fr))` }}
+        >
+          {Array.from({ length: crewSize }, (_, i) => {
+            const selectedId = seatSelections[i]
+            const selectedMember: Member | undefined = selectedId ? members.find(m => m.id === selectedId) : undefined
+            const takenIds = new Set(seatSelections.filter((id, j): id is string => id !== null && j !== i))
+            const filtered = members.filter(m =>
+              !takenIds.has(m.id) &&
+              m.name.toLowerCase().includes(seatSearches[i].toLowerCase())
+            )
+
+            return (
+              <div key={i} className="flex flex-col gap-2 min-w-0">
+                <p className="text-sm font-semibold text-gray-700">Roer {i + 1}</p>
+
+                {selectedMember ? (
+                  <div className="flex items-center justify-between px-3 py-2.5 bg-blue-50 border-2 border-club-blue rounded-xl">
+                    <span className="font-medium text-club-navy text-sm truncate">{selectedMember.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => clearSeat(i)}
+                      className="ml-2 text-gray-400 hover:text-gray-700 text-xl leading-none shrink-0"
+                    >
+                      ×
+                    </button>
                   </div>
-                  <span className="font-medium">{m.name}</span>
-                </button>
-              )
-            })}
-          </div>
+                ) : (
+                  <>
+                    <Input
+                      placeholder="Søk etter navn..."
+                      value={seatSearches[i]}
+                      onChange={e => updateSearch(i, e.target.value)}
+                    />
+                    <div className="space-y-1 max-h-52 overflow-y-auto">
+                      {filtered.length === 0 ? (
+                        <p className="text-xs text-gray-400 text-center py-3">Ingen funnet</p>
+                      ) : filtered.map(m => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => selectMember(i, m.id)}
+                          className="w-full text-left px-3 py-2.5 rounded-xl border border-gray-200 hover:border-club-blue hover:bg-blue-50 text-sm font-medium transition"
+                        >
+                          {m.name}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
@@ -233,7 +246,8 @@ export function StartSession({ boat, onClose }: Props) {
           <Input
             label="Starttidspunkt"
             type="datetime-local"
-            defaultValue={startTime}
+            value={startTime}
+            onChange={e => setStartTime(e.target.value)}
           />
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-2">Estimert varighet</label>
@@ -272,15 +286,17 @@ export function StartSession({ boat, onClose }: Props) {
         <div className="space-y-4">
           <div className="bg-gray-50 rounded-xl p-4 space-y-3 text-sm">
             <Row label="Båt" value={boat.name} />
-            <Row label="Type" value={BOAT_TYPE_LABELS[boat.type]} />
+            <Row label="Type" value={boat.boat_type?.name ?? ''} />
             <Row
               label="Roere"
               value={
                 selectedMemberIds.length === 0
                   ? 'Ingen valgt'
-                  : members
-                      .filter(m => selectedMemberIds.includes(m.id))
-                      .map(m => m.name)
+                  : seatSelections
+                      .map((id, i) => {
+                        const name = members.find(m => m.id === id)?.name ?? '—'
+                        return `${i + 1}. ${name}`
+                      })
                       .join(', ')
               }
             />

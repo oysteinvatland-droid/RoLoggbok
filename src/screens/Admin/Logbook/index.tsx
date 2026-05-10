@@ -1,22 +1,23 @@
 import { useState } from 'react'
-import { format } from 'date-fns'
+import { format, formatDistanceStrict } from 'date-fns'
 import { nb } from 'date-fns/locale'
-import { formatDistanceStrict } from 'date-fns'
 import { useSessionHistory } from '@/hooks/useSessions'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { Modal } from '@/components/ui/Modal'
 import type { SessionWithDetails } from '@/types'
 
 function exportCSV(sessions: SessionWithDetails[]) {
   const headers = [
-    'Dato', 'Starttid', 'Sluttid', 'Varighet (min)',
+    'Dato', 'Starttid', 'Sluttid', 'Distanse (km)', 'Varighet (min)',
     'Båt', 'Roere', 'Rute', 'Coachet', 'Hendelse', 'Kommentar',
   ]
   const rows = sessions.map(s => [
     format(new Date(s.start_time), 'dd.MM.yyyy'),
     format(new Date(s.start_time), 'HH:mm'),
     s.end_time ? format(new Date(s.end_time), 'HH:mm') : '',
+    s.distance_km != null ? String(s.distance_km) : '',
     s.end_time
       ? String(Math.round((new Date(s.end_time).getTime() - new Date(s.start_time).getTime()) / 60000))
       : '',
@@ -32,7 +33,6 @@ function exportCSV(sessions: SessionWithDetails[]) {
     .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
     .join('\n')
 
-  // BOM for correct Norwegian characters in Excel
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -42,11 +42,66 @@ function exportCSV(sessions: SessionWithDetails[]) {
   URL.revokeObjectURL(url)
 }
 
+function SessionDetail({ session: s, onClose }: { session: SessionWithDetails; onClose: () => void }) {
+  const duration = s.end_time
+    ? formatDistanceStrict(new Date(s.start_time), new Date(s.end_time), { locale: nb })
+    : null
+
+  return (
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={`Tur — ${s.boat?.name ?? '—'}`}
+      size="sm"
+      footer={<Button variant="secondary" onClick={onClose}>Lukk</Button>}
+    >
+      <dl className="space-y-3 text-sm">
+        <Row label="Dato">
+          {format(new Date(s.start_time), 'dd. MMMM yyyy', { locale: nb })}
+        </Row>
+        <Row label="Starttid">
+          {format(new Date(s.start_time), 'HH:mm', { locale: nb })}
+        </Row>
+        <Row label="Sluttid">
+          {s.end_time ? format(new Date(s.end_time), 'HH:mm', { locale: nb }) : '—'}
+        </Row>
+        {duration && <Row label="Varighet">{duration}</Row>}
+        <Row label="Båt">{s.boat?.name ?? '—'}</Row>
+        <Row label="Roere">
+          {s.members.length > 0 ? s.members.map(m => m.name).join(', ') : '—'}
+        </Row>
+        {s.route && <Row label="Rute">{s.route.name}{s.route.distance_km ? ` (${s.route.distance_km} km)` : ''}</Row>}
+        <Row label="Distanse">
+          {s.distance_km != null ? `${s.distance_km} km` : '—'}
+        </Row>
+        <Row label="Coachet">{s.has_been_coached ? 'Ja' : 'Nei'}</Row>
+        {s.comment && <Row label="Kommentar">{s.comment}</Row>}
+        {s.incident && (
+          <div className="pt-2 border-t border-gray-100">
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-600 mb-1">Hendelse</p>
+            <p className="text-gray-700">{s.incident.description}</p>
+          </div>
+        )}
+      </dl>
+    </Modal>
+  )
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-2">
+      <dt className="text-gray-500 w-28 shrink-0">{label}</dt>
+      <dd className="font-medium text-gray-900">{children}</dd>
+    </div>
+  )
+}
+
 export function LogbookAdmin() {
   const { data: sessions = [], isLoading } = useSessionHistory()
   const [search, setSearch] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [selected, setSelected] = useState<SessionWithDetails | null>(null)
 
   const filtered = sessions.filter(s => {
     const text = [
@@ -110,14 +165,18 @@ export function LogbookAdmin() {
                   <th className="text-left px-4 py-3">Dato / Tid</th>
                   <th className="text-left px-4 py-3">Båt</th>
                   <th className="text-left px-4 py-3">Roere</th>
-                  <th className="text-left px-4 py-3">Rute</th>
+                  <th className="text-left px-4 py-3">Distanse</th>
                   <th className="text-left px-4 py-3">Varighet</th>
                   <th className="text-left px-4 py-3">Flagg</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map(s => (
-                  <tr key={s.id} className="hover:bg-gray-50">
+                  <tr
+                    key={s.id}
+                    onClick={() => setSelected(s)}
+                    className="hover:bg-blue-50 cursor-pointer"
+                  >
                     <td className="px-4 py-3 whitespace-nowrap">
                       <p className="font-medium">{format(new Date(s.start_time), 'dd.MM.yyyy')}</p>
                       <p className="text-gray-500">
@@ -129,7 +188,9 @@ export function LogbookAdmin() {
                     <td className="px-4 py-3 text-gray-700">
                       {s.members.map(m => m.name).join(', ') || '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{s.route?.name ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {s.distance_km != null ? `${s.distance_km} km` : '—'}
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-600">
                       {s.end_time
                         ? formatDistanceStrict(new Date(s.start_time), new Date(s.end_time), { locale: nb })
@@ -148,6 +209,8 @@ export function LogbookAdmin() {
           </div>
         </div>
       )}
+
+      {selected && <SessionDetail session={selected} onClose={() => setSelected(null)} />}
     </div>
   )
 }

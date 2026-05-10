@@ -4,11 +4,18 @@ Digital loggbok for bruk av båter i Bærum Roklubb — en PWA som erstatter den
 
 ## Funksjonalitet
 
-- **Kiosk-dashboard**: Oversikt over alle båter — tilgjengelige, på vannet og til vedlikehold
+- **Kiosk-dashboard**: Oversikt over alle båter — tilgjengelige (grønn), på vannet (blå), til vedlikehold (grå) og borte på tur/stevne (gul)
 - **Start tur**: Velg båt, roere, rute og tidspunkt via en enkel veiviser
-- **Avslutt tur**: Registrer sluttid, om turen var coachet, og eventuelle hendelser/skader
+- **Avslutt tur**: Registrer sluttid, distanse (km), om turen var coachet, og eventuelle hendelser/skader
 - **Offline-støtte**: Appen fungerer uten nett — registreringer synkroniseres automatisk når nettforbindelsen er tilbake
-- **Admin** (PIN-beskyttet): CRUD for roere, båter og ruter; loggbok med søk og CSV-eksport
+- **Admin** (PIN-beskyttet):
+  - **Roere** — CRUD for medlemmer
+  - **Båter** — CRUD inkl. status, båttype, notat og «borte til»-dato
+  - **Lag** — CRUD for treningsgrupper/lag
+  - **Båttyper** — CRUD for båtklasser (mannskaps­størrelse, coachet, rekkefølge)
+  - **Ruter** — CRUD for faste ruter
+  - **Loggbok** — søk og CSV-eksport av alle turer
+  - **Distanser** — rodd distanse per roer eller per båt for valgbar periode, med CSV-eksport
 
 ## Teknologi
 
@@ -32,9 +39,12 @@ npm install
 ### 2. Opprett Supabase-prosjekt
 
 1. Gå til [supabase.com](https://supabase.com) og opprett et nytt prosjekt
-2. Kjør migrasjonen i Supabase SQL-editoren:
+2. Kjør migrasjonene i Supabase SQL-editoren **i rekkefølge**:
    ```
    supabase/migrations/001_initial_schema.sql
+   supabase/migrations/002_boat_types.sql
+   supabase/migrations/003_away_status.sql
+   supabase/migrations/004_distance.sql
    ```
 3. Kjør seed-kommandoen og noter UUID-en:
    ```sql

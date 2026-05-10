@@ -1,24 +1,6 @@
 // ─── Enum string unions ───────────────────────────────────────────────────────
 
-export type BoatStatus = 'available' | 'on_water' | 'maintenance'
-
-export type BoatType =
-  | '1x'
-  | '1x pl'
-  | '1xC'
-  | '1xTR'
-  | '2x'
-  | '2xC'
-  | '2xTR'
-  | '2-'
-  | '2x/2-'
-  | '4x/4-'
-  | '4x'
-  | '4-'
-  | '4+'
-  | '5x/4x+'
-  | '8+'
-  | 'innr'
+export type BoatStatus = 'available' | 'on_water' | 'maintenance' | 'away'
 
 export type MemberRole = 'rower' | 'coach' | 'admin'
 export type AgeCategory = 'J10' | 'J12' | 'J14' | 'J16' | 'J18' | 'Senior'
@@ -54,17 +36,29 @@ export interface Team {
   updated_at: string
 }
 
+export interface BoatKind {
+  id: string
+  club_id: string
+  name: string
+  crew_size: number
+  has_coach: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
 export interface Boat {
   id: string
   club_id: string
   name: string
-  type: BoatType
+  boat_type_id: string
+  boat_type: BoatKind | null
   status: BoatStatus
   boat_number: string | null
-  team_id: string | null
   min_age_category: AgeCategory | null
   min_seriousness: SeriousnessType | null
   notes: string | null
+  available_from: string | null
   archived_at: string | null
   created_at: string
   updated_at: string
@@ -90,6 +84,7 @@ export interface Session {
   end_time: string | null
   comment: string | null
   has_been_coached: boolean
+  distance_km: number | null
   created_at: string
   updated_at: string
 }
@@ -140,6 +135,7 @@ export interface StopSessionInput {
   has_been_coached: boolean
   incident_description: string | null
   boat_id: string
+  distance_km: number | null
 }
 
 // ─── Offline queue ────────────────────────────────────────────────────────────

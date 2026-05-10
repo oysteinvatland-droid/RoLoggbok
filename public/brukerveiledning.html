@@ -31,9 +31,11 @@
       vertical-align: middle;
       margin-right: 6px;
     }
-    .gronn { background: #22c55e; }
-    .blaa  { background: #2563eb; }
-    .graa  { background: #9ca3af; }
+    .gronn   { background: #22c55e; }
+    .blaa    { background: #2563eb; }
+    .oransje { background: #f59e0b; }
+    .graa    { background: #9ca3af; }
+    .lilla   { background: #a855f7; }
     .tips {
       background: #fffbeb;
       border: 1px solid #fcd34d;
@@ -71,7 +73,9 @@
   <ul>
     <li><span class="farge gronn"></span><strong>Grønn</strong> – båten er ledig og klar til bruk</li>
     <li><span class="farge blaa"></span><strong>Blå</strong> – båten er ute på vannet</li>
+    <li><span class="farge oransje"></span><strong>Oransje</strong> – båten er ute, men har passert forventet sluttidspunkt</li>
     <li><span class="farge graa"></span><strong>Grå</strong> – båten er til vedlikehold og kan ikke brukes</li>
+    <li><span class="farge lilla"></span><strong>Lilla</strong> – båten er borte på tur eller stevne. Datoen for forventet tilbakekomst vises på kortet.</li>
   </ul>
   <p>Øverst på siden kan du søke etter en bestemt båt ved navn, eller velge å bare se én type båt fra nedtrekksmenyen.</p>
 
@@ -87,11 +91,12 @@
 
   <h2>Avslutte en tur – når båten kommer tilbake</h2>
   <p>Gjør dette når roerne er tilbake på land:</p>
-  <div class="steg"><strong>Steg 1</strong> Trykk på den blå båten som er kommet tilbake.</div>
+  <div class="steg"><strong>Steg 1</strong> Trykk på den blå (eller oransje) båten som er kommet tilbake.</div>
   <div class="steg"><strong>Steg 2 – Slutttidspunkt</strong> Tidspunktet er allerede satt til nå. Juster hvis nødvendig.</div>
-  <div class="steg"><strong>Steg 3 – Trener til stede?</strong> Sett haken hvis det var trener med på turen.</div>
-  <div class="steg"><strong>Steg 4 – Hendelse (valgfritt)</strong> Hvis det skjedde noe under turen (f.eks. skade på utstyr), huk av for «Registrer hendelse» og beskriv kort hva som skjedde.</div>
-  <div class="steg"><strong>Steg 5</strong> Trykk «Avslutt tur». Båten blir grønn igjen.</div>
+  <div class="steg"><strong>Steg 3 – Distanse (valgfritt)</strong> Skriv inn antall kilometer som ble rodd, f.eks. «12.5». Feltet kan stå tomt.</div>
+  <div class="steg"><strong>Steg 4 – Trener til stede?</strong> Slå på bryteren hvis det var trener med på turen.</div>
+  <div class="steg"><strong>Steg 5 – Hendelse (valgfritt)</strong> Hvis det skjedde noe under turen (f.eks. skade på utstyr), huk av for «Registrer hendelse» og beskriv kort hva som skjedde.</div>
+  <div class="steg"><strong>Steg 6</strong> Trykk «Avslutt tur». Båten blir grønn igjen.</div>
 
   <div class="tips">Ser du en oransje ramme rundt en blå båt betyr det at turen har gått over forventet sluttidspunkt.</div>
 
@@ -104,12 +109,12 @@
   <hr />
 
   <h1>Administratorguide</h1>
-  <p>Admin-seksjonen brukes til å administrere roere, båter, lag, ruter og se loggboken. Den er beskyttet med en PIN-kode slik at ikke hvem som helst kan endre opplysninger.</p>
+  <p>Admin-seksjonen brukes til å administrere roere, båter, lag, båttyper, ruter og se loggboken. Den er beskyttet med en PIN-kode slik at ikke hvem som helst kan endre opplysninger.</p>
 
   <h2>Komme inn i Admin</h2>
   <div class="steg"><strong>Steg 1</strong> Trykk på tannhjulikonet øverst til høyre i banneret («Admin»).</div>
   <div class="steg"><strong>Steg 2</strong> Tast inn den firesifrede PIN-koden på talltastaturet som dukker opp.</div>
-  <div class="steg"><strong>Steg 3</strong> Trykk «← Kiosk» øverst til venstre for å gå tilbake til forsiden når du er ferdig.</div>
+  <div class="steg"><strong>Steg 3</strong> Trykk «← Forside» øverst til venstre for å gå tilbake til forsiden når du er ferdig.</div>
   <div class="tips">PIN-koden tilbakestilles automatisk når du lukker nettleserfanen. Dette er bevisst, slik at kiosken ikke forblir ulåst.</div>
 
   <h2>Roere</h2>
@@ -134,8 +139,11 @@
 
   <h3>Legge til en ny båt</h3>
   <div class="steg"><strong>Steg 1</strong> Trykk «+ Ny båt».</div>
-  <div class="steg"><strong>Steg 2</strong> Fyll inn navn, velg type (f.eks. 1x eller 8+) og status. Du kan også fylle inn båtnummer (f.eks. «166»), hvilket lag båten tilhører, og eventuelle merknader.</div>
+  <div class="steg"><strong>Steg 2</strong> Fyll inn navn, velg båttype (f.eks. Singlesculler 1x eller Åtter 8+) og status. Du kan også fylle inn båtnummer (f.eks. «166»), hvilket lag båten tilhører, og eventuelle merknader.</div>
   <div class="steg"><strong>Steg 3</strong> Trykk «Lagre».</div>
+
+  <h3>Sette en båt som «Borte»</h3>
+  <p>Rediger båten og sett status til «Borte». Du kan oppgi en dato for forventet tilbakekomst – appen nullstiller statusen automatisk den dagen. Båten vises da som lilla på forsiden og kan ikke bookes.</p>
 
   <h3>Redigere en båt</h3>
   <p>Trykk «Rediger» til høyre for båtnavnet. Her kan du endre alle opplysninger, inkludert å sette status til «Vedlikehold» hvis båten ikke skal være tilgjengelig en periode.</p>
@@ -156,6 +164,18 @@
   <h3>Slette et lag</h3>
   <p>Trykk «Slett» og bekreft. Båter som tilhørte laget mister lagstilknytningen, men påvirkes ikke på annen måte.</p>
 
+  <h2>Båttyper</h2>
+  <p>Båttyper definerer hvilke klasser av båter klubben har (f.eks. Singlesculler 1x, Dobbelsculler 2x, Åtter 8+). Båttypen bestemmer antall roerplasser og om det er plass til coach. Typen velges når du registrerer eller redigerer en båt.</p>
+
+  <h3>Legge til en ny båttype</h3>
+  <div class="steg"><strong>Steg 1</strong> Trykk «+ Ny båttype».</div>
+  <div class="steg"><strong>Steg 2</strong> Fyll inn navn (f.eks. «Singlesculler (1x)»), velg antall roere og huk eventuelt av for «Med coach».</div>
+  <div class="steg"><strong>Steg 3</strong> Sett et rekkefølgenummer hvis du vil styre sorteringsrekkefølgen i lister. Lavest tall vises først.</div>
+  <div class="steg"><strong>Steg 4</strong> Trykk «Lagre».</div>
+
+  <h3>Redigere eller slette en båttype</h3>
+  <p>Trykk «Rediger» eller «Slett» til høyre for typen. En type kan ikke slettes hvis det finnes båter som bruker den.</p>
+
   <h2>Ruter</h2>
   <p>Ruter er strekninger som kan velges når en tur registreres (f.eks. «Sandvika–Høvik»).</p>
 
@@ -168,7 +188,7 @@
   <p>Trykk «Arkiver» for å skjule ruten fra valgmenyen ved turregistrering. Den kan gjenopprettes på samme måte som roere og båter.</p>
 
   <h2>Loggbok</h2>
-  <p>Loggboken viser alle registrerte turer med dato, båt, roere, rute og varighet.</p>
+  <p>Loggboken viser alle registrerte turer med dato, båt, roere, rute, distanse og varighet.</p>
 
   <h3>Filtrere</h3>
   <p>Bruk datovelgerne øverst til å begrense visningen til en bestemt periode.</p>
@@ -178,7 +198,16 @@
   <div class="steg"><strong>Steg 2</strong> Trykk «Last ned CSV».</div>
   <div class="steg"><strong>Steg 3</strong> Filen lastes ned og kan åpnes direkte i Excel. Norske tegn (æ, ø, å) vises korrekt.</div>
 
-  <div class="tips">CSV-filen inneholder all samme informasjon som du ser på skjermen: dato, båt, roere, rute, varighet, om det var trener til stede, og eventuelle hendelser.</div>
+  <div class="tips">CSV-filen inneholder all samme informasjon som du ser på skjermen: dato, båt, roere, rute, distanse, varighet, om det var trener til stede, og eventuelle hendelser.</div>
+
+  <h2>Distanser</h2>
+  <p>Distanseoversikten summerer rodd distanse for en valgbar periode og viser rangeringen enten per roer eller per båt. Kun turer der distanse ble registrert ved avslutning er inkludert.</p>
+
+  <h3>Filtrere og bytte visning</h3>
+  <p>Velg «Fra dato» og «Til dato» øverst. Bruk knappene «Per roer» / «Per båt» til å bytte mellom de to visningene. Du kan også filtrere til én enkelt roer eller båt via nedtrekksmenyen.</p>
+
+  <h3>Laste ned som Excel-fil</h3>
+  <p>Trykk «Last ned CSV» for å eksportere tabellen med navn, antall turer og totaldistanse.</p>
 
   <h2>Spørsmål eller problemer?</h2>
   <p>Ta kontakt med den teknisk ansvarlige i klubben.</p>

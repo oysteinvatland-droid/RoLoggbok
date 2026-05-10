@@ -1,39 +1,40 @@
 import { useState } from 'react'
-import { useAllBoats, useCreateBoat, useUpdateBoat, useTeams } from '@/hooks/useBoats'
+import { useAllBoats, useCreateBoat, useUpdateBoat } from '@/hooks/useBoats'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
-import { BOAT_TYPE_LABELS, BOAT_STATUS_LABELS, ALL_BOAT_TYPES } from '@/constants'
-import type { Boat, BoatType, BoatStatus } from '@/types'
+import { useBoatTypes } from '@/hooks/useBoats'
+import { BOAT_STATUS_LABELS } from '@/constants'
+import type { Boat, BoatStatus } from '@/types'
 
 const STATUS_BADGE: Record<BoatStatus, 'success' | 'info' | 'warning'> = {
-  available: 'success', on_water: 'info', maintenance: 'warning',
+  available: 'success', on_water: 'info', maintenance: 'warning', away: 'warning',
 }
 
 interface BoatFormValues {
   name: string
-  type: BoatType
+  boat_type_id: string
   status: BoatStatus
   boat_number: string
-  team_id: string
   notes: string
+  available_from: string
 }
 
 const DEFAULT_FORM: BoatFormValues = {
   name: '',
-  type: '1x',
+  boat_type_id: '',
   status: 'available',
   boat_number: '',
-  team_id: '',
   notes: '',
+  available_from: '',
 }
 
 export function BoatAdmin() {
   const { data: boats = [], isLoading } = useAllBoats()
-  const { data: teams = [] } = useTeams()
+  const { data: boatTypes = [] } = useBoatTypes()
   const createBoat = useCreateBoat()
   const updateBoat = useUpdateBoat()
   const { toast } = useToast()
@@ -52,13 +53,13 @@ export function BoatAdmin() {
 
   function openEdit(b: Boat) {
     setModalBoat(b)
-    setForm({ name: b.name, type: b.type, status: b.status, boat_number: b.boat_number ?? '', team_id: b.team_id ?? '', notes: b.notes ?? '' })
+    setForm({ name: b.name, boat_type_id: b.boat_type_id, status: b.status, boat_number: b.boat_number ?? '', notes: b.notes ?? '', available_from: b.available_from ?? '' })
     setShowNew(false)
   }
 
   function openNew() {
     setModalBoat(null)
-    setForm(DEFAULT_FORM)
+    setForm({ ...DEFAULT_FORM, boat_type_id: boatTypes[0]?.id ?? '' })
     setShowNew(true)
   }
 
@@ -68,21 +69,21 @@ export function BoatAdmin() {
         await updateBoat.mutateAsync({
           id: modalBoat.id,
           name: form.name,
-          type: form.type,
+          boat_type_id: form.boat_type_id,
           status: form.status,
           boat_number: form.boat_number || null,
-          team_id: form.team_id || null,
           notes: form.notes || null,
+          available_from: form.status === 'away' && form.available_from ? form.available_from : null,
         })
         toast('Båt oppdatert')
       } else {
         await createBoat.mutateAsync({
           name: form.name,
-          type: form.type,
+          boat_type_id: form.boat_type_id,
           status: form.status,
           boat_number: form.boat_number || null,
-          team_id: form.team_id || null,
           notes: form.notes || null,
+          available_from: null,
           min_age_category: null,
           min_seriousness: null,
           archived_at: null,
@@ -148,12 +149,12 @@ export function BoatAdmin() {
                   {b.boat_number && <span className="ml-2 text-gray-400 font-normal text-sm">#{b.boat_number}</span>}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {BOAT_TYPE_LABELS[b.type]}
-                  {b.team_id && teams.find(t => t.id === b.team_id) && (
-                    <span className="ml-2 text-gray-400">· {teams.find(t => t.id === b.team_id)!.name}</span>
-                  )}
+                  {b.boat_type?.name ?? ''}
                 </p>
                 {b.notes && <p className="text-xs text-gray-400 truncate">{b.notes}</p>}
+                {b.status === 'away' && b.available_from && (
+                  <p className="text-xs text-purple-600">Tilbake: {new Date(b.available_from + 'T00:00:00').toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                )}
               </div>
               <Badge variant={STATUS_BADGE[b.status]} size="sm">
                 {BOAT_STATUS_LABELS[b.status]}
@@ -193,9 +194,9 @@ export function BoatAdmin() {
           />
           <Select
             label="Type"
-            value={form.type}
-            onChange={e => setForm(f => ({ ...f, type: e.target.value as BoatType }))}
-            options={ALL_BOAT_TYPES.map(t => ({ value: t, label: BOAT_TYPE_LABELS[t] }))}
+            value={form.boat_type_id}
+            onChange={e => setForm(f => ({ ...f, boat_type_id: e.target.value }))}
+            options={boatTypes.map(t => ({ value: t.id, label: t.name }))}
           />
           <Select
             label="Status"
@@ -204,22 +205,22 @@ export function BoatAdmin() {
             options={[
               { value: 'available',   label: 'Tilgjengelig' },
               { value: 'maintenance', label: 'Vedlikehold' },
+              { value: 'away',        label: 'På tur/regatta' },
             ]}
           />
+          {form.status === 'away' && (
+            <Input
+              type="date"
+              label="Tilgjengelig igjen (valgfritt)"
+              value={form.available_from}
+              onChange={e => setForm(f => ({ ...f, available_from: e.target.value }))}
+            />
+          )}
           <Input
             label="Nummer (valgfritt)"
             value={form.boat_number}
             onChange={e => setForm(f => ({ ...f, boat_number: e.target.value }))}
             placeholder="F.eks. BK-042"
-          />
-          <Select
-            label="Lag (valgfritt)"
-            value={form.team_id}
-            onChange={e => setForm(f => ({ ...f, team_id: e.target.value }))}
-            options={[
-              { value: '', label: '— Intet lag —' },
-              ...teams.map(t => ({ value: t.id, label: t.name })),
-            ]}
           />
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1">Merknader (valgfritt)</label>

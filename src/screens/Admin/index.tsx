@@ -92,9 +92,11 @@ export function AdminGate() {
             {[
               { to: 'members', label: 'Roere' },
               { to: 'boats',   label: 'Båter' },
-              { to: 'teams',   label: 'Lag' },
-              { to: 'routes',  label: 'Ruter' },
-              { to: 'logbook', label: 'Loggbok' },
+              { to: 'teams',      label: 'Lag' },
+              { to: 'boat-types', label: 'Båttyper' },
+              { to: 'routes',     label: 'Ruter' },
+              { to: 'logbook',    label: 'Loggbok' },
+              { to: 'distances',  label: 'Distanser' },
             ].map(({ to, label }) => (
               <NavLink
                 key={to}
@@ -112,7 +114,7 @@ export function AdminGate() {
         </div>
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white" onClick={() => navigate('/')}>
-            ← Kiosk
+            ← Forside
           </Button>
           <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white" onClick={logout}>
             Logg ut

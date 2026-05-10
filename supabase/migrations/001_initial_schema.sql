@@ -72,7 +72,6 @@ create table public.boats (
   type             public.boat_type   not null default '1x',
   status           public.boat_status not null default 'available',
   boat_number      text,
-  team_id          uuid references public.teams(id) on delete set null,
   min_age_category public.age_category,
   min_seriousness  public.seriousness_type,
   notes            text,

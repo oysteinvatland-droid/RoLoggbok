@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { clsx } from 'clsx'
-import { formatDistanceStrict } from 'date-fns'
+import { formatDistanceStrict, format } from 'date-fns'
 import { nb } from 'date-fns/locale'
 import type { Boat, BoatWithActiveSession } from '@/types'
-import { BOAT_TYPE_LABELS, BOAT_STATUS_LABELS } from '@/constants'
+import { BOAT_STATUS_LABELS } from '@/constants'
 import { Button } from '@/components/ui/Button'
 
 interface BoatCardProps {
@@ -30,6 +30,7 @@ export function BoatCard({ boat, onStartClick, onStopClick }: BoatCardProps) {
   const session = boat.active_session
   const isOnWater = boat.status === 'on_water' && session
   const isMaintenance = boat.status === 'maintenance'
+  const isAway = boat.status === 'away'
 
   const estimatedEnd = session?.estimated_end_time
   const isOverdue = estimatedEnd ? new Date(estimatedEnd) < new Date() : false
@@ -43,6 +44,7 @@ export function BoatCard({ boat, onStartClick, onStopClick }: BoatCardProps) {
           'border-club-blue bg-blue-50':  isOnWater && !isOverdue,
           'border-amber-400 bg-amber-50': isOnWater && isOverdue,
           'border-gray-300 bg-gray-100 opacity-60': isMaintenance,
+          'border-purple-400 bg-purple-50 opacity-70': isAway,
         }
       )}
     >
@@ -51,16 +53,17 @@ export function BoatCard({ boat, onStartClick, onStopClick }: BoatCardProps) {
         <div>
           <h3 className="font-bold text-lg text-gray-900 leading-tight">{boat.name}</h3>
           <p className="text-sm text-gray-500">
-            {BOAT_TYPE_LABELS[boat.type]}
+            {boat.boat_type?.name ?? ''}
             {boat.boat_number && <span className="ml-2 text-gray-400">#{boat.boat_number}</span>}
           </p>
         </div>
         <span
           className={clsx('text-xs font-medium px-2 py-1 rounded-full shrink-0', {
-            'bg-green-200 text-green-800': boat.status === 'available',
+            'bg-green-200 text-green-800':   boat.status === 'available',
             'bg-blue-200 text-blue-800':   isOnWater && !isOverdue,
             'bg-amber-200 text-amber-800': isOnWater && isOverdue,
             'bg-gray-200 text-gray-600':   isMaintenance,
+            'bg-purple-200 text-purple-800': isAway,
           })}
         >
           {BOAT_STATUS_LABELS[boat.status]}
@@ -98,13 +101,22 @@ export function BoatCard({ boat, onStartClick, onStopClick }: BoatCardProps) {
         </div>
       )}
 
-      {/* Maintenance note */}
-      {isMaintenance && boat.notes && (
+      {/* Notes */}
+      {boat.notes && (
         <p className="text-sm text-gray-500 italic">{boat.notes}</p>
       )}
 
+      {/* Away info */}
+      {isAway && (
+        <p className="text-sm text-purple-700">
+          {boat.available_from
+            ? `Tilbake: ${format(new Date(boat.available_from + 'T00:00:00'), 'd. MMMM yyyy', { locale: nb })}`
+            : 'Tilbakekomst ukjent'}
+        </p>
+      )}
+
       {/* Action button */}
-      {!isMaintenance && (
+      {!isMaintenance && !isAway && (
         <div className="mt-auto pt-2">
           {boat.status === 'available' ? (
             <Button

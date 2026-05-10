@@ -56,6 +56,7 @@ export function useStartSession() {
           end_time: null,
           comment: input.comment || null,
           has_been_coached: false,
+          distance_km: null,
           created_at: now,
           updated_at: now,
         }
@@ -109,6 +110,7 @@ export function useStopSession() {
         await db.sessions.update(input.session_id, {
           end_time: input.end_time,
           has_been_coached: input.has_been_coached,
+          distance_km: input.distance_km,
           updated_at: now,
         })
         await addToQueue({
@@ -121,7 +123,7 @@ export function useStopSession() {
 
       const { error } = await supabase
         .from('sessions')
-        .update({ end_time: input.end_time, has_been_coached: input.has_been_coached })
+        .update({ end_time: input.end_time, has_been_coached: input.has_been_coached, distance_km: input.distance_km })
         .eq('id', input.session_id)
       if (error) throw error
 

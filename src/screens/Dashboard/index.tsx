@@ -4,27 +4,25 @@ import { StatusBar } from '@/components/layout/StatusBar'
 import { BoatCard } from './BoatCard'
 import { StartSession } from '@/screens/Session/StartSession'
 import { StopSession } from '@/screens/Session/StopSession'
-import { BOAT_TYPE_LABELS, ALL_BOAT_TYPES } from '@/constants'
-import type { Boat, BoatType, BoatWithActiveSession } from '@/types'
+import type { Boat, BoatWithActiveSession } from '@/types'
 
 export function Dashboard() {
   const { data: boats = [], isLoading, isError } = useDashboardData()
   const [startBoat, setStartBoat] = useState<Boat | null>(null)
   const [stopBoat, setStopBoat] = useState<BoatWithActiveSession | null>(null)
   const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState<BoatType | ''>('')
-
-  const usedTypes = ALL_BOAT_TYPES.filter(t => boats.some(b => b.type === t))
+  const [crewFilter, setCrewFilter] = useState<number | null>(null)
 
   const filtered = boats.filter(b => {
     const matchName = b.name.toLowerCase().includes(search.toLowerCase())
-    const matchType = typeFilter === '' || b.type === typeFilter
-    return matchName && matchType
+    const matchCrew = crewFilter === null || b.boat_type?.crew_size === crewFilter
+    return matchName && matchCrew
   })
 
   const available    = filtered.filter(b => b.status === 'available')
   const onWater      = filtered.filter(b => b.status === 'on_water')
   const maintenance  = filtered.filter(b => b.status === 'maintenance')
+  const away         = filtered.filter(b => b.status === 'away')
 
   return (
     <div className="flex flex-col h-full">
@@ -43,19 +41,24 @@ export function Dashboard() {
             className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-club-blue"
           />
         </div>
-        <select
-          value={typeFilter}
-          onChange={e => setTypeFilter(e.target.value as BoatType | '')}
-          className="px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-club-blue bg-white text-gray-700"
-        >
-          <option value="">Alle typer</option>
-          {usedTypes.map(t => (
-            <option key={t} value={t}>{BOAT_TYPE_LABELS[t]}</option>
+        <div className="flex gap-2">
+          {[1, 2, 4, 8].map(n => (
+            <button
+              key={n}
+              onClick={() => setCrewFilter(crewFilter === n ? null : n)}
+              className={`px-3 py-2 text-sm rounded-lg border transition ${
+                crewFilter === n
+                  ? 'bg-club-blue text-white border-club-blue'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {n} {n === 1 ? 'Roer' : 'Roere'}
+            </button>
           ))}
-        </select>
-        {(search || typeFilter) && (
+        </div>
+        {(search || crewFilter !== null) && (
           <button
-            onClick={() => { setSearch(''); setTypeFilter('') }}
+            onClick={() => { setSearch(''); setCrewFilter(null) }}
             className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50"
           >
             Nullstill
@@ -123,6 +126,25 @@ export function Dashboard() {
                 </div>
               )}
             </section>
+
+            {/* Away / regatta */}
+            {away.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  På tur/regatta ({away.length})
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {away.map(boat => (
+                    <BoatCard
+                      key={boat.id}
+                      boat={boat}
+                      onStartClick={setStartBoat}
+                      onStopClick={setStopBoat}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Maintenance */}
             {maintenance.length > 0 && (

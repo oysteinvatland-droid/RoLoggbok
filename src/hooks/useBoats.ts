@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase, CLUB_ID } from '@/lib/supabase'
 import { db } from '@/lib/dexie'
-import type { Boat, BoatWithActiveSession, Member, Route, SessionWithDetails, Team } from '@/types'
+import type { Boat, BoatKind, BoatWithActiveSession, Member, Route, SessionWithDetails, Team } from '@/types'
 
 export const boatKeys = {
   all:     ['boats', CLUB_ID] as const,
@@ -16,7 +16,7 @@ export function useDashboardData() {
       const [boatsRes, sessionsRes] = await Promise.all([
         supabase
           .from('boats')
-          .select('*')
+          .select('*, boat_type:boat_types(*)')
           .eq('club_id', CLUB_ID)
           .is('archived_at', null)
           .order('name'),
@@ -39,6 +39,21 @@ export function useDashboardData() {
       } else {
         boats = boatsRes.data as Boat[]
         await db.boats.bulkPut(boats)
+      }
+
+      // Reset 'away' boats whose return date has passed (pg_cron does this at 06:00 UTC;
+      // this ensures the kiosk shows correct state from midnight onwards)
+      const today = new Date().toISOString().split('T')[0]
+      const toReset = boats.filter(b => b.status === 'away' && b.available_from != null && b.available_from <= today)
+      if (toReset.length > 0) {
+        supabase
+          .from('boats')
+          .update({ status: 'available', available_from: null })
+          .in('id', toReset.map(b => b.id))
+          .then(() => {})
+        boats = boats.map(b =>
+          toReset.some(r => r.id === b.id) ? { ...b, status: 'available' as const, available_from: null } : b
+        )
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,7 +81,7 @@ export function useBoats() {
     queryFn: async (): Promise<Boat[]> => {
       const { data, error } = await supabase
         .from('boats')
-        .select('*')
+        .select('*, boat_type:boat_types(*)')
         .eq('club_id', CLUB_ID)
         .is('archived_at', null)
         .order('name')
@@ -84,7 +99,7 @@ export function useAllBoats() {
     queryFn: async (): Promise<Boat[]> => {
       const { data, error } = await supabase
         .from('boats')
-        .select('*')
+        .select('*, boat_type:boat_types(*)')
         .eq('club_id', CLUB_ID)
         .order('name')
       if (error) throw error
@@ -94,14 +109,16 @@ export function useAllBoats() {
   })
 }
 
+type BoatWriteInput = Omit<Boat, 'id' | 'club_id' | 'created_at' | 'updated_at' | 'boat_type'>
+
 export function useCreateBoat() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: Omit<Boat, 'id' | 'club_id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (input: BoatWriteInput) => {
       const { data, error } = await supabase
         .from('boats')
         .insert({ ...input, club_id: CLUB_ID })
-        .select()
+        .select('*, boat_type:boat_types(*)')
         .single()
       if (error) throw error
       return data as Boat
@@ -113,12 +130,12 @@ export function useCreateBoat() {
 export function useUpdateBoat() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, ...input }: Partial<Boat> & { id: string }) => {
+    mutationFn: async ({ id, boat_type: _bt, ...input }: Partial<Boat> & { id: string }) => {
       const { data, error } = await supabase
         .from('boats')
         .update(input)
         .eq('id', id)
-        .select()
+        .select('*, boat_type:boat_types(*)')
         .single()
       if (error) throw error
       return data as Boat
@@ -237,5 +254,65 @@ export function useDeleteTeam() {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['teams', CLUB_ID] }),
+  })
+}
+
+export function useBoatTypes() {
+  return useQuery({
+    queryKey: ['boat_types', CLUB_ID],
+    queryFn: async (): Promise<BoatKind[]> => {
+      const { data, error } = await supabase
+        .from('boat_types')
+        .select('*')
+        .eq('club_id', CLUB_ID)
+        .order('sort_order')
+      if (error) throw error
+      return data as BoatKind[]
+    },
+    staleTime: 60_000,
+  })
+}
+
+export function useCreateBoatType() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: Omit<BoatKind, 'id' | 'club_id' | 'created_at' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from('boat_types')
+        .insert({ ...input, club_id: CLUB_ID })
+        .select()
+        .single()
+      if (error) throw error
+      return data as BoatKind
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['boat_types', CLUB_ID] }),
+  })
+}
+
+export function useUpdateBoatType() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...input }: Partial<BoatKind> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('boat_types')
+        .update(input)
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data as BoatKind
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['boat_types', CLUB_ID] }),
+  })
+}
+
+export function useDeleteBoatType() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('boat_types').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['boat_types', CLUB_ID] }),
   })
 }
