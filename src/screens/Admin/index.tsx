@@ -92,8 +92,9 @@ export function AdminGate() {
             {[
               { to: 'members', label: 'Roere' },
               { to: 'boats',   label: 'Båter' },
-              { to: 'teams',      label: 'Lag' },
+              { to: 'teams',      label: 'Treningsgrupper' },
               { to: 'boat-types', label: 'Båttyper' },
+              { to: 'boat-type-filters', label: 'Filter' },
               { to: 'routes',     label: 'Ruter' },
               { to: 'logbook',    label: 'Loggbok' },
               { to: 'distances',  label: 'Distanser' },

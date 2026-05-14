@@ -31,6 +31,14 @@ export interface Team {
   id: string
   club_id: string
   name: string
+  created_at: string
+  updated_at: string
+}
+
+export interface BoatTypeFilter {
+  id: string
+  club_id: string
+  name: string
   sort_order: number
   created_at: string
   updated_at: string
@@ -42,7 +50,8 @@ export interface BoatKind {
   name: string
   crew_size: number
   has_coach: boolean
-  sort_order: number
+  filter_id: string | null
+  filter: BoatTypeFilter | null
   created_at: string
   updated_at: string
 }
@@ -55,6 +64,10 @@ export interface Boat {
   boat_type: BoatKind | null
   status: BoatStatus
   boat_number: string | null
+  team_id: string | null
+  secondary_team_id: string | null
+  team: Team | null
+  secondary_team: Team | null
   min_age_category: AgeCategory | null
   min_seriousness: SeriousnessType | null
   notes: string | null

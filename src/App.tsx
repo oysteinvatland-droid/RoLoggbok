@@ -9,6 +9,7 @@ import { RouteAdmin } from '@/screens/Admin/Routes'
 import { LogbookAdmin } from '@/screens/Admin/Logbook'
 import { TeamAdmin } from '@/screens/Admin/Teams'
 import { BoatTypeAdmin } from '@/screens/Admin/BoatTypes'
+import { BoatTypeFiltersAdmin } from '@/screens/Admin/BoatTypeFilters'
 import { DistancesAdmin } from '@/screens/Admin/Distances'
 import { AppLogin } from '@/screens/Login'
 import { useAppAuth } from '@/hooks/useAppAuth'
@@ -43,6 +44,7 @@ function AppContent() {
             <Route path="boats"   element={<BoatAdmin />} />
             <Route path="teams"      element={<TeamAdmin />} />
             <Route path="boat-types" element={<BoatTypeAdmin />} />
+            <Route path="boat-type-filters" element={<BoatTypeFiltersAdmin />} />
             <Route path="routes"     element={<RouteAdmin />} />
             <Route path="logbook" element={<LogbookAdmin />} />
             <Route path="distances" element={<DistancesAdmin />} />

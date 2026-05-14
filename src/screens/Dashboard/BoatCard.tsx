@@ -4,7 +4,6 @@ import { formatDistanceStrict, format } from 'date-fns'
 import { nb } from 'date-fns/locale'
 import type { Boat, BoatWithActiveSession } from '@/types'
 import { BOAT_STATUS_LABELS } from '@/constants'
-import { Button } from '@/components/ui/Button'
 
 interface BoatCardProps {
   boat: BoatWithActiveSession
@@ -35,10 +34,21 @@ export function BoatCard({ boat, onStartClick, onStopClick }: BoatCardProps) {
   const estimatedEnd = session?.estimated_end_time
   const isOverdue = estimatedEnd ? new Date(estimatedEnd) < new Date() : false
 
+  const isClickable = boat.status === 'available' || (boat.status === 'on_water' && !!session)
+
+  const handleClick = isClickable
+    ? () => boat.status === 'available' ? onStartClick(boat) : onStopClick(boat)
+    : undefined
+
   return (
     <div
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onClick={handleClick}
+      onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click() } : undefined}
       className={clsx(
         'rounded-2xl border-2 p-4 flex flex-col gap-3 transition-all',
+        isClickable && 'cursor-pointer hover:shadow-lg active:scale-[0.98]',
         {
           'border-green-400 bg-green-50': boat.status === 'available',
           'border-club-blue bg-blue-50':  isOnWater && !isOverdue,
@@ -56,18 +66,25 @@ export function BoatCard({ boat, onStartClick, onStopClick }: BoatCardProps) {
             {boat.boat_type?.name ?? ''}
             {boat.boat_number && <span className="ml-2 text-gray-400">#{boat.boat_number}</span>}
           </p>
+          {(boat.team || boat.secondary_team) && (
+            <p className="text-xs text-gray-400">
+              {boat.team?.name}
+              {boat.secondary_team && ` (${boat.secondary_team.name})`}
+            </p>
+          )}
         </div>
-        <span
-          className={clsx('text-xs font-medium px-2 py-1 rounded-full shrink-0', {
-            'bg-green-200 text-green-800':   boat.status === 'available',
-            'bg-blue-200 text-blue-800':   isOnWater && !isOverdue,
-            'bg-amber-200 text-amber-800': isOnWater && isOverdue,
-            'bg-gray-200 text-gray-600':   isMaintenance,
-            'bg-purple-200 text-purple-800': isAway,
-          })}
-        >
-          {BOAT_STATUS_LABELS[boat.status]}
-        </span>
+        {boat.status !== 'available' && (
+          <span
+            className={clsx('text-xs font-medium px-2 py-1 rounded-full shrink-0', {
+              'bg-blue-200 text-blue-800':     isOnWater && !isOverdue,
+              'bg-amber-200 text-amber-800':   isOnWater && isOverdue,
+              'bg-gray-200 text-gray-600':     isMaintenance,
+              'bg-purple-200 text-purple-800': isAway,
+            })}
+          >
+            {BOAT_STATUS_LABELS[boat.status]}
+          </span>
+        )}
       </div>
 
       {/* Active session info */}
@@ -115,37 +132,6 @@ export function BoatCard({ boat, onStartClick, onStopClick }: BoatCardProps) {
         </p>
       )}
 
-      {/* Action button */}
-      {!isMaintenance && !isAway && (
-        <div className="mt-auto pt-2">
-          {boat.status === 'available' ? (
-            <Button
-              size="xl"
-              variant="primary"
-              className="w-full"
-              onClick={() => onStartClick(boat)}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Start tur
-            </Button>
-          ) : (
-            <Button
-              size="xl"
-              variant="secondary"
-              className={clsx('w-full', isOverdue && 'border-amber-400 text-amber-700 hover:bg-amber-50')}
-              onClick={() => onStopClick(boat)}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Avslutt tur
-            </Button>
-          )}
-        </div>
-      )}
     </div>
   )
 }

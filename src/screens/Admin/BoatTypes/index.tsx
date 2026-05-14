@@ -9,8 +9,8 @@ import type { BoatKind } from '@/types'
 
 const CREW_SIZE_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8].map(n => ({ value: String(n), label: String(n) }))
 
-interface BoatTypeFormValues { name: string; crew_size: string; has_coach: boolean; sort_order: string }
-const DEFAULT_FORM: BoatTypeFormValues = { name: '', crew_size: '1', has_coach: false, sort_order: '' }
+interface BoatTypeFormValues { name: string; crew_size: string; has_coach: boolean }
+const DEFAULT_FORM: BoatTypeFormValues = { name: '', crew_size: '1', has_coach: false }
 
 export function BoatTypeAdmin() {
   const { data: boatTypes = [], isLoading } = useBoatTypes()
@@ -26,7 +26,7 @@ export function BoatTypeAdmin() {
 
   function openEdit(bt: BoatKind) {
     setModalItem(bt)
-    setForm({ name: bt.name, crew_size: String(bt.crew_size), has_coach: bt.has_coach, sort_order: String(bt.sort_order) })
+    setForm({ name: bt.name, crew_size: String(bt.crew_size), has_coach: bt.has_coach })
     setShowNew(false)
   }
 
@@ -38,13 +38,12 @@ export function BoatTypeAdmin() {
 
   async function handleSave() {
     const crew_size = parseInt(form.crew_size, 10)
-    const sort_order = form.sort_order ? parseInt(form.sort_order, 10) : 0
     try {
       if (modalItem) {
-        await updateBoatType.mutateAsync({ id: modalItem.id, name: form.name, crew_size, has_coach: form.has_coach, sort_order })
+        await updateBoatType.mutateAsync({ id: modalItem.id, name: form.name, crew_size, has_coach: form.has_coach })
         toast('Båttype oppdatert')
       } else {
-        await createBoatType.mutateAsync({ name: form.name, crew_size, has_coach: form.has_coach, sort_order })
+        await createBoatType.mutateAsync({ name: form.name, crew_size, has_coach: form.has_coach })
         toast('Båttype lagt til')
       }
       setModalItem(null)
@@ -132,13 +131,6 @@ export function BoatTypeAdmin() {
             />
             Med coach
           </label>
-          <Input
-            label="Rekkefølge (valgfritt)"
-            type="number"
-            value={form.sort_order}
-            onChange={e => setForm(f => ({ ...f, sort_order: e.target.value }))}
-            placeholder="F.eks. 1"
-          />
         </div>
       </Modal>
 

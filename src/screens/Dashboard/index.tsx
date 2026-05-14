@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useDashboardData } from '@/hooks/useBoats'
+import { useBoatTypeFilters } from '@/hooks/useBoatTypeFilters'
 import { StatusBar } from '@/components/layout/StatusBar'
 import { BoatCard } from './BoatCard'
 import { StartSession } from '@/screens/Session/StartSession'
@@ -8,15 +9,16 @@ import type { Boat, BoatWithActiveSession } from '@/types'
 
 export function Dashboard() {
   const { data: boats = [], isLoading, isError } = useDashboardData()
+  const { data: filters = [] } = useBoatTypeFilters()
   const [startBoat, setStartBoat] = useState<Boat | null>(null)
   const [stopBoat, setStopBoat] = useState<BoatWithActiveSession | null>(null)
   const [search, setSearch] = useState('')
-  const [crewFilter, setCrewFilter] = useState<number | null>(null)
+  const [typeFilterId, setTypeFilterId] = useState<string | null>(null)
 
   const filtered = boats.filter(b => {
     const matchName = b.name.toLowerCase().includes(search.toLowerCase())
-    const matchCrew = crewFilter === null || b.boat_type?.crew_size === crewFilter
-    return matchName && matchCrew
+    const matchType = typeFilterId === null || b.boat_type?.filter_id === typeFilterId
+    return matchName && matchType
   })
 
   const available    = filtered.filter(b => b.status === 'available')
@@ -41,24 +43,26 @@ export function Dashboard() {
             className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-club-blue"
           />
         </div>
-        <div className="flex gap-2">
-          {[1, 2, 4, 8].map(n => (
-            <button
-              key={n}
-              onClick={() => setCrewFilter(crewFilter === n ? null : n)}
-              className={`px-3 py-2 text-sm rounded-lg border transition ${
-                crewFilter === n
-                  ? 'bg-club-blue text-white border-club-blue'
-                  : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              {n} {n === 1 ? 'Roer' : 'Roere'}
-            </button>
-          ))}
-        </div>
-        {(search || crewFilter !== null) && (
+        {filters.length > 0 && (
+          <div className="flex gap-2">
+            {filters.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setTypeFilterId(typeFilterId === f.id ? null : f.id)}
+                className={`px-3 py-2 text-sm rounded-lg border transition ${
+                  typeFilterId === f.id
+                    ? 'bg-club-blue text-white border-club-blue'
+                    : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {f.name}
+              </button>
+            ))}
+          </div>
+        )}
+        {(search || typeFilterId !== null) && (
           <button
-            onClick={() => { setSearch(''); setCrewFilter(null) }}
+            onClick={() => { setSearch(''); setTypeFilterId(null) }}
             className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50"
           >
             Nullstill

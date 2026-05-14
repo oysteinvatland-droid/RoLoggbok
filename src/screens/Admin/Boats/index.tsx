@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAllBoats, useCreateBoat, useUpdateBoat } from '@/hooks/useBoats'
+import { useAllBoats, useCreateBoat, useUpdateBoat, useTeams } from '@/hooks/useBoats'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -21,6 +21,8 @@ interface BoatFormValues {
   boat_number: string
   notes: string
   available_from: string
+  team_id: string
+  secondary_team_id: string
 }
 
 const DEFAULT_FORM: BoatFormValues = {
@@ -30,11 +32,20 @@ const DEFAULT_FORM: BoatFormValues = {
   boat_number: '',
   notes: '',
   available_from: '',
+  team_id: '',
+  secondary_team_id: '',
+}
+
+function teamLabel(b: Boat): string {
+  if (!b.team) return ''
+  if (b.secondary_team) return `${b.team.name} (${b.secondary_team.name})`
+  return b.team.name
 }
 
 export function BoatAdmin() {
   const { data: boats = [], isLoading } = useAllBoats()
   const { data: boatTypes = [] } = useBoatTypes()
+  const { data: teams = [] } = useTeams()
   const createBoat = useCreateBoat()
   const updateBoat = useUpdateBoat()
   const { toast } = useToast()
@@ -53,7 +64,16 @@ export function BoatAdmin() {
 
   function openEdit(b: Boat) {
     setModalBoat(b)
-    setForm({ name: b.name, boat_type_id: b.boat_type_id, status: b.status, boat_number: b.boat_number ?? '', notes: b.notes ?? '', available_from: b.available_from ?? '' })
+    setForm({
+      name: b.name,
+      boat_type_id: b.boat_type_id,
+      status: b.status,
+      boat_number: b.boat_number ?? '',
+      notes: b.notes ?? '',
+      available_from: b.available_from ?? '',
+      team_id: b.team_id ?? '',
+      secondary_team_id: b.secondary_team_id ?? '',
+    })
     setShowNew(false)
   }
 
@@ -64,26 +84,31 @@ export function BoatAdmin() {
   }
 
   async function handleSave() {
+    if (!form.team_id) {
+      toast('Velg hvem som bruker båten', 'error')
+      return
+    }
+    if (form.secondary_team_id && form.secondary_team_id === form.team_id) {
+      toast('"Brukes av" og "Kan brukes av" kan ikke være like', 'error')
+      return
+    }
     try {
+      const payload = {
+        name: form.name,
+        boat_type_id: form.boat_type_id,
+        status: form.status,
+        boat_number: form.boat_number || null,
+        notes: form.notes || null,
+        available_from: form.status === 'away' && form.available_from ? form.available_from : null,
+        team_id: form.team_id || null,
+        secondary_team_id: form.secondary_team_id || null,
+      }
       if (modalBoat) {
-        await updateBoat.mutateAsync({
-          id: modalBoat.id,
-          name: form.name,
-          boat_type_id: form.boat_type_id,
-          status: form.status,
-          boat_number: form.boat_number || null,
-          notes: form.notes || null,
-          available_from: form.status === 'away' && form.available_from ? form.available_from : null,
-        })
+        await updateBoat.mutateAsync({ id: modalBoat.id, ...payload })
         toast('Båt oppdatert')
       } else {
         await createBoat.mutateAsync({
-          name: form.name,
-          boat_type_id: form.boat_type_id,
-          status: form.status,
-          boat_number: form.boat_number || null,
-          notes: form.notes || null,
-          available_from: null,
+          ...payload,
           min_age_category: null,
           min_seriousness: null,
           archived_at: null,
@@ -108,6 +133,12 @@ export function BoatAdmin() {
   }
 
   const isPending = createBoat.isPending || updateBoat.isPending
+
+  const primaryTeamOptions = teams.map(t => ({ value: t.id, label: t.name }))
+  const secondaryTeamOptions = [
+    { value: '', label: '— Ingen —' },
+    ...teams.filter(t => t.id !== form.team_id).map(t => ({ value: t.id, label: t.name })),
+  ]
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -149,7 +180,7 @@ export function BoatAdmin() {
                   {b.boat_number && <span className="ml-2 text-gray-400 font-normal text-sm">#{b.boat_number}</span>}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {b.boat_type?.name ?? ''}
+                  {[b.boat_type?.name, teamLabel(b)].filter(Boolean).join(' · ')}
                 </p>
                 {b.notes && <p className="text-xs text-gray-400 truncate">{b.notes}</p>}
                 {b.status === 'away' && b.available_from && (
@@ -199,6 +230,19 @@ export function BoatAdmin() {
             options={boatTypes.map(t => ({ value: t.id, label: t.name }))}
           />
           <Select
+            label="Brukes av"
+            value={form.team_id}
+            onChange={e => setForm(f => ({ ...f, team_id: e.target.value, secondary_team_id: f.secondary_team_id === e.target.value ? '' : f.secondary_team_id }))}
+            options={primaryTeamOptions}
+            placeholder="Velg treningsgruppe"
+          />
+          <Select
+            label="Kan brukes av (valgfritt)"
+            value={form.secondary_team_id}
+            onChange={e => setForm(f => ({ ...f, secondary_team_id: e.target.value }))}
+            options={secondaryTeamOptions}
+          />
+          <Select
             label="Status"
             value={form.status}
             onChange={e => setForm(f => ({ ...f, status: e.target.value as BoatStatus }))}
@@ -220,7 +264,7 @@ export function BoatAdmin() {
             label="Nummer (valgfritt)"
             value={form.boat_number}
             onChange={e => setForm(f => ({ ...f, boat_number: e.target.value }))}
-            placeholder="F.eks. BK-042"
+            placeholder="F.eks. 142"
           />
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1">Merknader (valgfritt)</label>
