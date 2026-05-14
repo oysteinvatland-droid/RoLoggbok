@@ -77,7 +77,7 @@
     <li><span class="farge graa"></span><strong>Grå</strong> – båten er til vedlikehold og kan ikke brukes</li>
     <li><span class="farge lilla"></span><strong>Lilla</strong> – båten er borte på tur eller stevne. Datoen for forventet tilbakekomst vises på kortet.</li>
   </ul>
-  <p>Øverst på siden kan du søke etter en bestemt båt ved navn, eller velge å bare se én type båt fra nedtrekksmenyen.</p>
+  <p>Øverst på siden kan du søke etter en bestemt båt ved navn. Hvis det er satt opp filterknapper (f.eks. «Sculler» eller «Inrigger»), kan du trykke på én av dem for å vise kun den gruppen båter.</p>
 
   <h2>Registrere en tur – når båten drar ut</h2>
   <p>Gjør dette når roere skal ut på vannet:</p>
@@ -122,7 +122,7 @@
 
   <h3>Legge til en ny roer</h3>
   <div class="steg"><strong>Steg 1</strong> Trykk «+ Ny roer».</div>
-  <div class="steg"><strong>Steg 2</strong> Fyll inn fullt navn, velg rolle (Roer / Trener / Administrator), alderskategori og type (Mosjonist / Konkurrerende).</div>
+  <div class="steg"><strong>Steg 2</strong> Fyll inn fullt navn og velg type (Mosjonist / Konkurrerende).</div>
   <div class="steg"><strong>Steg 3</strong> Trykk «Lagre».</div>
 
   <h3>Redigere en roer</h3>
@@ -132,7 +132,7 @@
   <p>Trykk «Arkiver» til høyre for navnet. Roeren forsvinner fra listen, men all historikk beholdes. Huk av «Vis arkiverte» øverst for å se dem igjen, og trykk «Gjenopprett» for å aktivere på nytt.</p>
 
   <h3>Filtrere listen</h3>
-  <p>Bruk søkefeltet øverst til å søke på navn, eller velg en klasse (f.eks. J16 eller Senior) fra nedtrekksmenyen for å se bare den gruppen.</p>
+  <p>Bruk søkefeltet øverst til å søke på navn.</p>
 
   <h2>Båter</h2>
   <p>Her administrerer du båtene som vises på forsiden.</p>
@@ -153,16 +153,16 @@
 
   <div class="advarsel">Å sette status til «Vedlikehold» viser båten på forsiden som utilgjengelig (grå). Arkivering skjuler båten helt. Bruk vedlikehold for midlertidige stans, arkivering for båter som tas permanent ut av bruk.</div>
 
-  <h2>Lag</h2>
-  <p>Lag er grupperinger som kan knyttes til båter (f.eks. «BR Aktive» eller «Masters»). Dette gjør det lettere å holde orden på hvilke båter som tilhører hvilken gruppe.</p>
+  <h2>Treningsgrupper</h2>
+  <p>Treningsgrupper er grupperinger som kan knyttes til båter (f.eks. «BR Aktive» eller «Masters»). Dette gjør det lettere å holde orden på hvilke båter som tilhører hvilken gruppe.</p>
 
-  <h3>Legge til et nytt lag</h3>
-  <div class="steg"><strong>Steg 1</strong> Trykk «+ Nytt lag».</div>
-  <div class="steg"><strong>Steg 2</strong> Fyll inn navn og rekkefølge (et tall som bestemmer sorteringsrekkefølgen i nedtrekksmenyer).</div>
+  <h3>Legge til en ny treningsgruppe</h3>
+  <div class="steg"><strong>Steg 1</strong> Trykk «+ Ny treningsgruppe».</div>
+  <div class="steg"><strong>Steg 2</strong> Fyll inn navn.</div>
   <div class="steg"><strong>Steg 3</strong> Trykk «Lagre».</div>
 
-  <h3>Slette et lag</h3>
-  <p>Trykk «Slett» og bekreft. Båter som tilhørte laget mister lagstilknytningen, men påvirkes ikke på annen måte.</p>
+  <h3>Slette en treningsgruppe</h3>
+  <p>Trykk «Slett» og bekreft. Båter som tilhørte gruppen mister gruppeknytningen, men påvirkes ikke på annen måte.</p>
 
   <h2>Båttyper</h2>
   <p>Båttyper definerer hvilke klasser av båter klubben har (f.eks. Singlesculler 1x, Dobbelsculler 2x, Åtter 8+). Båttypen bestemmer antall roerplasser og om det er plass til coach. Typen velges når du registrerer eller redigerer en båt.</p>
@@ -170,11 +170,22 @@
   <h3>Legge til en ny båttype</h3>
   <div class="steg"><strong>Steg 1</strong> Trykk «+ Ny båttype».</div>
   <div class="steg"><strong>Steg 2</strong> Fyll inn navn (f.eks. «Singlesculler (1x)»), velg antall roere og huk eventuelt av for «Med coach».</div>
-  <div class="steg"><strong>Steg 3</strong> Sett et rekkefølgenummer hvis du vil styre sorteringsrekkefølgen i lister. Lavest tall vises først.</div>
-  <div class="steg"><strong>Steg 4</strong> Trykk «Lagre».</div>
+  <div class="steg"><strong>Steg 3</strong> Trykk «Lagre».</div>
 
   <h3>Redigere eller slette en båttype</h3>
   <p>Trykk «Rediger» eller «Slett» til høyre for typen. En type kan ikke slettes hvis det finnes båter som bruker den.</p>
+
+  <h2>Filter</h2>
+  <p>Filter er hurtigknapper som vises øverst på forsiden og lar brukere vise kun én gruppe båter av gangen. Hvert filter kan inneholde én eller flere båttyper – for eksempel kan et filter hete «Sculler» og inneholde 1x, 2x og 4x.</p>
+
+  <h3>Legge til et nytt filter</h3>
+  <div class="steg"><strong>Steg 1</strong> Trykk «+ Nytt filter».</div>
+  <div class="steg"><strong>Steg 2</strong> Fyll inn navn og sett rekkefølge (lavest tall vises til venstre).</div>
+  <div class="steg"><strong>Steg 3</strong> Huk av de båttypene som skal inngå i filteret.</div>
+  <div class="steg"><strong>Steg 4</strong> Trykk «Lagre».</div>
+
+  <h3>Redigere eller slette et filter</h3>
+  <p>Trykk «Rediger» for å endre navn, rekkefølge eller hvilke båttyper som er inkludert. Trykk «Slett» og bekreft for å fjerne filteret – båttypene berøres ikke.</p>
 
   <h2>Ruter</h2>
   <p>Ruter er strekninger som kan velges når en tur registreres (f.eks. «Sandvika–Høvik»).</p>
