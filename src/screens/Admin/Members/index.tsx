@@ -57,7 +57,7 @@ export function MemberAdmin() {
         await updateMember.mutateAsync({ id: modalMember.id, ...form })
         toast('Roer oppdatert')
       } else {
-        await createMember.mutateAsync({ ...form, archived_at: null })
+        await createMember.mutateAsync({ ...form, role: 'rower', age_category: 'Senior', archived_at: null })
         toast('Roer lagt til')
       }
       setModalMember(null)
