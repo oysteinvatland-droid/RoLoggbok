@@ -7,26 +7,17 @@ import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
 import {
-  AGE_CATEGORY_LABELS, SERIOUSNESS_LABELS, MEMBER_ROLE_LABELS,
-  ALL_AGE_CATEGORIES, ALL_SERIOUSNESS, ALL_ROLES,
+  SERIOUSNESS_LABELS, ALL_SERIOUSNESS,
 } from '@/constants'
-import type { Member, AgeCategory, SeriousnessType, MemberRole } from '@/types'
-
-const ROLE_BADGE: Record<MemberRole, 'neutral' | 'info' | 'warning'> = {
-  rower: 'neutral', coach: 'info', admin: 'warning',
-}
+import type { Member, SeriousnessType } from '@/types'
 
 interface MemberFormValues {
   name: string
-  role: MemberRole
-  age_category: AgeCategory
   seriousness: SeriousnessType
 }
 
 const DEFAULT_FORM: MemberFormValues = {
   name: '',
-  role: 'rower',
-  age_category: 'Senior',
   seriousness: 'recreational',
 }
 
@@ -37,7 +28,6 @@ export function MemberAdmin() {
   const { toast } = useToast()
 
   const [search, setSearch] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<AgeCategory | ''>('')
   const [showArchived, setShowArchived] = useState(false)
   const [modalMember, setModalMember] = useState<Member | null>(null)
   const [showNew, setShowNew] = useState(false)
@@ -45,14 +35,13 @@ export function MemberAdmin() {
 
   const filtered = members.filter(m => {
     const matchSearch = m.name.toLowerCase().includes(search.toLowerCase())
-    const matchCategory = categoryFilter === '' || m.age_category === categoryFilter
     const matchArchived = showArchived ? true : !m.archived_at
-    return matchSearch && matchCategory && matchArchived
+    return matchSearch && matchArchived
   })
 
   function openEdit(m: Member) {
     setModalMember(m)
-    setForm({ name: m.name, role: m.role, age_category: m.age_category, seriousness: m.seriousness })
+    setForm({ name: m.name, seriousness: m.seriousness })
     setShowNew(false)
   }
 
@@ -107,16 +96,6 @@ export function MemberAdmin() {
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-        <select
-          value={categoryFilter}
-          onChange={e => setCategoryFilter(e.target.value as AgeCategory | '')}
-          className="px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-club-blue bg-white text-gray-700"
-        >
-          <option value="">Alle klasser</option>
-          {ALL_AGE_CATEGORIES.map(c => (
-            <option key={c} value={c}>{AGE_CATEGORY_LABELS[c]}</option>
-          ))}
-        </select>
         <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
           <input
             type="checkbox"
@@ -140,10 +119,9 @@ export function MemberAdmin() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-900 truncate">{m.name}</p>
                 <p className="text-sm text-gray-500">
-                  {AGE_CATEGORY_LABELS[m.age_category]} · {SERIOUSNESS_LABELS[m.seriousness]}
+                  {SERIOUSNESS_LABELS[m.seriousness]}
                 </p>
               </div>
-              <Badge variant={ROLE_BADGE[m.role]} size="sm">{MEMBER_ROLE_LABELS[m.role]}</Badge>
               {m.archived_at && <Badge variant="neutral" size="sm">Arkivert</Badge>}
               <div className="flex gap-2 shrink-0">
                 <Button variant="ghost" size="sm" onClick={() => openEdit(m)}>Rediger</Button>
@@ -176,18 +154,6 @@ export function MemberAdmin() {
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             placeholder="Fullt navn"
-          />
-          <Select
-            label="Rolle"
-            value={form.role}
-            onChange={e => setForm(f => ({ ...f, role: e.target.value as MemberRole }))}
-            options={ALL_ROLES.map(r => ({ value: r, label: MEMBER_ROLE_LABELS[r] }))}
-          />
-          <Select
-            label="Alderskategori"
-            value={form.age_category}
-            onChange={e => setForm(f => ({ ...f, age_category: e.target.value as AgeCategory }))}
-            options={ALL_AGE_CATEGORIES.map(c => ({ value: c, label: AGE_CATEGORY_LABELS[c] }))}
           />
           <Select
             label="Type"
