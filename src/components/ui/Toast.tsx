@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
 import { clsx } from 'clsx'
 
 type ToastType = 'success' | 'error' | 'info'
@@ -12,10 +12,10 @@ const ToastContext = createContext<ToastContextValue>({ toast: () => {} })
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
-  let counter = 0
+  const counter = useRef(0)
 
   const toast = useCallback((message: string, type: ToastType = 'success') => {
-    const id = ++counter
+    const id = ++counter.current
     setToasts(prev => [...prev, { id, message, type }])
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500)
   }, [])
@@ -44,6 +44,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useToast() {
   return useContext(ToastContext)
 }
