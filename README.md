@@ -4,7 +4,7 @@ Digital loggbok for bruk av båter i Bærum Roklubb — en PWA som erstatter den
 
 ## Funksjonalitet
 
-- **Kiosk-dashboard**: Oversikt over alle båter — tilgjengelige (grønn), på vannet (blå), til vedlikehold (grå) og borte på tur/stevne (gul)
+- **Kiosk-dashboard**: Oversikt over alle båter — tilgjengelige (grønn), på vannet (blå), til vedlikehold (grå) og borte på tur/stevne eller regatta (gul)
 - **Start tur**: Velg båt, roere, rute og tidspunkt via en enkel veiviser
 - **Avslutt tur**: Registrer sluttid, distanse (km), om turen var coachet, og eventuelle hendelser/skader
 - **Offline-støtte**: Appen fungerer uten nett — registreringer synkroniseres automatisk når nettforbindelsen er tilbake
