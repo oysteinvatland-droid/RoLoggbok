@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures/auth'
-import { setupDashboardMocks } from './helpers/supabaseMock'
+import { setupDashboardMocks } from './helpers/apiMock'
 
 test.beforeEach(async ({ page }) => {
   await setupDashboardMocks(page)

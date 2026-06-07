@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures/auth'
-import { setupOnWaterMocks } from './helpers/supabaseMock'
+import { setupOnWaterMocks } from './helpers/apiMock'
 
 test.beforeEach(async ({ page }) => {
   await setupOnWaterMocks(page)

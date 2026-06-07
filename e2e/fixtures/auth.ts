@@ -1,12 +1,6 @@
-import { test as base, expect } from '@playwright/test'
+// Auth håndteres nå server-side; testene mocker GET /api/session til { authenticated: true }
+// i helpers/apiMock.ts, så ingen sessionStorage-triks trengs lenger. Beholdt som tynt
+// gjenbrukspunkt slik at spec-ene kan importere test/expect herfra.
+import { test, expect } from '@playwright/test'
 
-export const test = base.extend<object, object>({
-  page: async ({ page }, use) => {
-    await page.addInitScript(() => {
-      sessionStorage.setItem('baatlogg_app_auth', 'true')
-    })
-    await use(page)
-  },
-})
-
-export { expect }
+export { test, expect }
