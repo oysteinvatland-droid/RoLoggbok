@@ -1,16 +1,18 @@
 import { useState } from 'react'
-
-const CORRECT_PIN = import.meta.env.VITE_ADMIN_PIN ?? '1234'
+import { api } from '@/lib/api'
 
 export function useAdminPin() {
+  // In-memory (ikke persistert) → PIN kreves hver gang admin åpnes, som før.
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  function authenticate(pin: string): boolean {
-    if (pin === CORRECT_PIN) {
+  async function authenticate(pin: string): Promise<boolean> {
+    try {
+      await api.post('/admin/verify', { pin })
       setIsAuthenticated(true)
       return true
+    } catch {
+      return false
     }
-    return false
   }
 
   function logout() {

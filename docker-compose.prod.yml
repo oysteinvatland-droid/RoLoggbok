@@ -1,0 +1,40 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      PORT: "3000"
+      # host=db → snakker med Postgres-containeren på compose-nettet
+      DATABASE_URL: "postgres://baatlogg:${POSTGRES_PASSWORD}@db:5432/baatlogg"
+    ports:
+      - "127.0.0.1:3001:3000"   # ALDRI eksponert direkte; nginx proxyer hit
+    mem_limit: 512m
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine   # matcher Supabase-kilden (17.6) for ren restore
+    environment:
+      POSTGRES_USER: baatlogg
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: baatlogg
+    volumes:
+      - baatlogg_db:/var/lib/postgresql/data
+      # Renset skjema (uten RLS/anon) kjøres ved første oppstart av tom database.
+      # Genereres i skjema-/drift-steget → server/db/init/001_schema.sql
+      - ./server/db/init:/docker-entrypoint-initdb.d:ro
+    mem_limit: 512m
+    restart: unless-stopped
+    # INGEN ports-mapping — databasen er kun tilgjengelig på compose-nettet.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U baatlogg -d baatlogg"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  baatlogg_db:

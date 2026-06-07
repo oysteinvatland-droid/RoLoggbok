@@ -31,6 +31,7 @@ const queryClient = new QueryClient({
 
 function AppContent() {
   const { isAuthenticated, authenticate } = useAppAuth()
+  if (isAuthenticated === null) return null // laster sesjonsstatus
   if (!isAuthenticated) return <AppLogin onLogin={authenticate} />
 
   return (

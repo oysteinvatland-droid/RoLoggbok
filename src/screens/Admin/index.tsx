@@ -9,12 +9,12 @@ export function AdminGate() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  function handlePin(digit: string) {
+  async function handlePin(digit: string) {
     const next = pin + digit
     setPin(next)
     setError('')
     if (next.length === 4) {
-      if (authenticate(next)) {
+      if (await authenticate(next)) {
         setPin('')
       } else {
         setError('Feil PIN')

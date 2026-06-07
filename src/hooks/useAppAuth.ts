@@ -1,21 +1,30 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { api } from '@/lib/api'
 
-const CORRECT_USERNAME = import.meta.env.VITE_APP_USERNAME ?? 'admin'
-const CORRECT_PASSWORD = import.meta.env.VITE_APP_PASSWORD ?? ''
-const SESSION_KEY = 'baatlogg_app_auth'
+interface SessionInfo {
+  authenticated: boolean
+  admin: boolean
+}
 
 export function useAppAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => sessionStorage.getItem(SESSION_KEY) === 'true'
-  )
+  // null = laster sesjonsstatus fra serveren; deretter true/false.
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
-  function authenticate(username: string, password: string): boolean {
-    if (username === CORRECT_USERNAME && password === CORRECT_PASSWORD) {
-      sessionStorage.setItem(SESSION_KEY, 'true')
+  useEffect(() => {
+    api
+      .get<SessionInfo>('/session')
+      .then((s) => setIsAuthenticated(s.authenticated))
+      .catch(() => setIsAuthenticated(false))
+  }, [])
+
+  async function authenticate(username: string, password: string): Promise<boolean> {
+    try {
+      await api.post('/login', { username, password })
       setIsAuthenticated(true)
       return true
+    } catch {
+      return false
     }
-    return false
   }
 
   return { isAuthenticated, authenticate }
