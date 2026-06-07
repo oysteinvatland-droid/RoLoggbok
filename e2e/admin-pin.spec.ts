@@ -1,9 +1,9 @@
-import { test, expect } from './fixtures/auth'
+import { test, expect } from '@playwright/test'
+import { setupAdminPinMocks } from './helpers/apiMock'
 
 test.beforeEach(async ({ page }) => {
-  await page.route('**/rest/v1/**', route =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
-  )
+  // Innlogget app; admin-PIN verifiseres server-side. Korrekt PIN = 0000.
+  await setupAdminPinMocks(page, '0000')
 })
 
 test('navigasjon til /admin viser PIN-numpad', async ({ page }) => {

@@ -15,10 +15,11 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            // Samme-origin API-kall (Fastify-backend). Kun GET caches av Workbox.
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'supabase-cache',
+              cacheName: 'api-cache',
               networkTimeoutSeconds: 5,
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 },
             },

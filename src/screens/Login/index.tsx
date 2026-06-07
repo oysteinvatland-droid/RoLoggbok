@@ -1,17 +1,20 @@
 import { useState, type FormEvent } from 'react'
 
 interface Props {
-  onLogin: (username: string, password: string) => boolean
+  onLogin: (username: string, password: string) => Promise<boolean>
 }
 
 export function AppLogin({ onLogin }: Props) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const ok = onLogin(username, password)
+    setSubmitting(true)
+    const ok = await onLogin(username, password)
+    setSubmitting(false)
     if (!ok) {
       setError(true)
       setPassword('')
@@ -57,9 +60,10 @@ export function AppLogin({ onLogin }: Props) {
 
           <button
             type="submit"
-            className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-3 text-base transition"
+            disabled={submitting}
+            className="mt-2 w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-lg py-3 text-base transition"
           >
-            Logg inn
+            {submitting ? 'Logger inn…' : 'Logg inn'}
           </button>
         </form>
       </div>

@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test'
+import { setupLoginMocks } from './helpers/apiMock'
 
-const USERNAME = 'testbruker'
+const USERNAME = 'admin'
 const PASSWORD = 'testpassord'
 
 test.beforeEach(async ({ page }) => {
-  await page.route('**/rest/v1/**', route =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
-  )
+  // Ikke innlogget; /api/login godtar kun USERNAME/PASSWORD, resten av API-et mockes.
+  await setupLoginMocks(page, USERNAME, PASSWORD)
 })
 
 test('korrekte credentials gir tilgang til dashboard', async ({ page }) => {
@@ -15,8 +15,6 @@ test('korrekte credentials gir tilgang til dashboard', async ({ page }) => {
   await page.locator('input[autocomplete="current-password"]').fill(PASSWORD)
   await page.getByRole('button', { name: 'Logg inn' }).click()
   await expect(page.getByText(/Tilgjengelige/)).toBeVisible()
-  const stored = await page.evaluate(() => sessionStorage.getItem('baatlogg_app_auth'))
-  expect(stored).toBe('true')
 })
 
 test('feil passord viser feilmelding', async ({ page }) => {

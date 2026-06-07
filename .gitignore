@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Miljøvariabler med hemmeligheter (.env.example er trygg og spores)
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

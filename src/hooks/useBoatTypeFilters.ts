@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase, CLUB_ID } from '@/lib/supabase'
+import { api, CLUB_ID } from '@/lib/api'
 import type { BoatKind, BoatTypeFilter } from '@/types'
 
 export interface BoatTypeFilterWithTypes extends BoatTypeFilter {
@@ -9,15 +9,7 @@ export interface BoatTypeFilterWithTypes extends BoatTypeFilter {
 export function useBoatTypeFilters() {
   return useQuery({
     queryKey: ['boat_type_filters', CLUB_ID],
-    queryFn: async (): Promise<BoatTypeFilterWithTypes[]> => {
-      const { data, error } = await supabase
-        .from('boat_type_filters')
-        .select('*, boat_types(*)')
-        .eq('club_id', CLUB_ID)
-        .order('sort_order')
-      if (error) throw error
-      return data as BoatTypeFilterWithTypes[]
-    },
+    queryFn: () => api.get<BoatTypeFilterWithTypes[]>('/boat-type-filters'),
     staleTime: 60_000,
   })
 }
@@ -25,15 +17,8 @@ export function useBoatTypeFilters() {
 export function useCreateBoatTypeFilter() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { name: string; sort_order: number }) => {
-      const { data, error } = await supabase
-        .from('boat_type_filters')
-        .insert({ ...input, club_id: CLUB_ID })
-        .select()
-        .single()
-      if (error) throw error
-      return data as BoatTypeFilter
-    },
+    mutationFn: (input: { name: string; sort_order: number }) =>
+      api.post<BoatTypeFilter>('/boat-type-filters', input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['boat_type_filters', CLUB_ID] }),
   })
 }
@@ -41,16 +26,8 @@ export function useCreateBoatTypeFilter() {
 export function useUpdateBoatTypeFilter() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, boat_types: _bt, ...input }: Partial<BoatTypeFilterWithTypes> & { id: string }) => {
-      const { data, error } = await supabase
-        .from('boat_type_filters')
-        .update(input)
-        .eq('id', id)
-        .select()
-        .single()
-      if (error) throw error
-      return data as BoatTypeFilter
-    },
+    mutationFn: ({ id, boat_types: _bt, ...input }: Partial<BoatTypeFilterWithTypes> & { id: string }) =>
+      api.patch<BoatTypeFilter>(`/boat-type-filters/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['boat_type_filters', CLUB_ID] }),
   })
 }
@@ -58,37 +35,17 @@ export function useUpdateBoatTypeFilter() {
 export function useDeleteBoatTypeFilter() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('boat_type_filters').delete().eq('id', id)
-      if (error) throw error
-    },
+    mutationFn: (id: string) => api.del(`/boat-type-filters/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['boat_type_filters', CLUB_ID] }),
   })
 }
 
-// Tilordner et sett med båttyper til et filter.
-// - Setter filter_id på de valgte båttypene
-// - Fjerner filter_id fra de som tidligere tilhørte filteret men ikke lenger er valgt
+// Tilordner et sett båttyper til et filter (server gjør diff + bulk-oppdatering).
 export function useAssignBoatTypesToFilter() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ filterId, boatTypeIds, previousBoatTypeIds }: {
-      filterId: string
-      boatTypeIds: string[]
-      previousBoatTypeIds: string[]
-    }) => {
-      const toAdd    = boatTypeIds.filter(id => !previousBoatTypeIds.includes(id))
-      const toRemove = previousBoatTypeIds.filter(id => !boatTypeIds.includes(id))
-
-      if (toAdd.length > 0) {
-        const { error } = await supabase.from('boat_types').update({ filter_id: filterId }).in('id', toAdd)
-        if (error) throw error
-      }
-      if (toRemove.length > 0) {
-        const { error } = await supabase.from('boat_types').update({ filter_id: null }).in('id', toRemove)
-        if (error) throw error
-      }
-    },
+    mutationFn: (vars: { filterId: string; boatTypeIds: string[]; previousBoatTypeIds: string[] }) =>
+      api.post('/boat-types/assign-filter', vars),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['boat_type_filters', CLUB_ID] })
       qc.invalidateQueries({ queryKey: ['boat_types', CLUB_ID] })
