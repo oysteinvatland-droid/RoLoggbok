@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, CLUB_ID } from '@/lib/api'
-import { db } from '@/lib/dexie'
+import { db, mirror, readMirror } from '@/lib/dexie'
 import type { Boat, BoatKind, BoatWithActiveSession, Route, Team } from '@/types'
 
 export const boatKeys = {
@@ -16,11 +16,12 @@ export function useDashboardData() {
       try {
         // Server gjør away-reset, fletter aktive turer og sorterer på 30-dagers bruk.
         const data = await api.get<BoatWithActiveSession[]>('/dashboard')
-        await db.boats.bulkPut(data.map(({ active_session: _a, ...boat }) => boat as Boat))
+        // Speil lokalt, men la aldri en cache-feil velte et vellykket server-svar.
+        await mirror(() => db.boats.bulkPut(data.map(({ active_session: _a, ...boat }) => boat as Boat)))
         return data
       } catch {
         // Offline-fallback: speilede båter uten aktiv-tur-info
-        const boats = await db.boats.filter((b) => !b.archived_at).sortBy('name')
+        const boats = await readMirror(() => db.boats.filter((b) => !b.archived_at).sortBy('name'), [])
         return boats.map((boat) => ({ ...boat, active_session: null }))
       }
     },
@@ -35,10 +36,10 @@ export function useBoats() {
     queryFn: async (): Promise<Boat[]> => {
       try {
         const data = await api.get<Boat[]>('/boats')
-        await db.boats.bulkPut(data)
+        await mirror(() => db.boats.bulkPut(data))
         return data
       } catch {
-        return db.boats.filter((b) => !b.archived_at).sortBy('name')
+        return readMirror(() => db.boats.filter((b) => !b.archived_at).sortBy('name'), [])
       }
     },
     staleTime: 30_000,
@@ -78,10 +79,10 @@ export function useRoutes() {
     queryFn: async (): Promise<Route[]> => {
       try {
         const data = await api.get<Route[]>('/routes')
-        await db.routes.bulkPut(data)
+        await mirror(() => db.routes.bulkPut(data))
         return data
       } catch {
-        return db.routes.filter((r) => !r.archived_at).sortBy('name')
+        return readMirror(() => db.routes.filter((r) => !r.archived_at).sortBy('name'), [])
       }
     },
     staleTime: 60_000,
