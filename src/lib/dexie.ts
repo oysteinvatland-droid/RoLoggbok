@@ -35,3 +35,26 @@ export const db = new BaatloggDatabase()
 export function sessionMemberId(session_id: string, member_id: string) {
   return `${session_id}::${member_id}`
 }
+
+/**
+ * Speiler data til IndexedDB uten å la en lokal lagringsfeil velte et vellykket
+ * nett-svar. Hvis IndexedDB er utilgjengelig/ødelagt på enheten (sett på Android-
+ * kiosken), logges feilen og ignoreres — serverdata vises uansett.
+ */
+export async function mirror(write: () => Promise<unknown>): Promise<void> {
+  try {
+    await write()
+  } catch (err) {
+    console.warn('Lokal speiling til IndexedDB feilet (ignorert):', err)
+  }
+}
+
+/** Leser fra det lokale speilet, men returnerer `fallback` hvis IndexedDB feiler. */
+export async function readMirror<T>(read: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await read()
+  } catch (err) {
+    console.warn('Lokal lesing fra IndexedDB feilet:', err)
+    return fallback
+  }
+}

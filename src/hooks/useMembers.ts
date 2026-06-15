@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, CLUB_ID } from '@/lib/api'
-import { db } from '@/lib/dexie'
+import { db, mirror, readMirror } from '@/lib/dexie'
 import type { Member } from '@/types'
 
 export const memberKeys = {
@@ -14,11 +14,11 @@ export function useMembers() {
     queryFn: async (): Promise<Member[]> => {
       try {
         const data = await api.get<Member[]>('/members')
-        await db.members.bulkPut(data)
+        await mirror(() => db.members.bulkPut(data))
         return data
       } catch {
         // Offline-fallback fra lokal speiling (kun denne klubbens data ligger i Dexie)
-        return db.members.filter((m) => !m.archived_at).sortBy('name')
+        return readMirror(() => db.members.filter((m) => !m.archived_at).sortBy('name'), [])
       }
     },
     staleTime: 60_000,
@@ -30,7 +30,7 @@ export function useAllMembers() {
     queryKey: memberKeys.all,
     queryFn: async (): Promise<Member[]> => {
       const data = await api.get<Member[]>('/members?scope=all')
-      await db.members.bulkPut(data)
+      await mirror(() => db.members.bulkPut(data))
       return data
     },
     staleTime: 30_000,
