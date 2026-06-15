@@ -13,6 +13,7 @@ import { BoatTypeFiltersAdmin } from '@/screens/Admin/BoatTypeFilters'
 import { DistancesAdmin } from '@/screens/Admin/Distances'
 import { AppLogin } from '@/screens/Login'
 import { useAppAuth } from '@/hooks/useAppAuth'
+import { useKeepAwake } from '@/hooks/useKeepAwake'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +31,7 @@ const queryClient = new QueryClient({
 })
 
 function AppContent() {
+  useKeepAwake()
   const { isAuthenticated, authenticate } = useAppAuth()
   if (isAuthenticated === null) return null // laster sesjonsstatus
   if (!isAuthenticated) return <AppLogin onLogin={authenticate} />
