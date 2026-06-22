@@ -11,6 +11,7 @@ import { TeamAdmin } from '@/screens/Admin/Teams'
 import { BoatTypeAdmin } from '@/screens/Admin/BoatTypes'
 import { BoatTypeFiltersAdmin } from '@/screens/Admin/BoatTypeFilters'
 import { DistancesAdmin } from '@/screens/Admin/Distances'
+import { Help } from '@/screens/Help'
 import { AppLogin } from '@/screens/Login'
 import { useAppAuth } from '@/hooks/useAppAuth'
 import { useKeepAwake } from '@/hooks/useKeepAwake'
@@ -41,6 +42,7 @@ function AppContent() {
       <div className="h-full flex flex-col">
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/hjelp" element={<Help />} />
           <Route path="/admin" element={<AdminGate />}>
             <Route index element={<Navigate to="members" replace />} />
             <Route path="members" element={<MemberAdmin />} />
