@@ -1,5 +1,10 @@
-import { Pool } from 'pg'
+import { Pool, types } from 'pg'
 import { env } from './env'
+
+// node-postgres returnerer `numeric`/`decimal` (OID 1700) som streng for å bevare presisjon.
+// Frontend-typene forventer tall (PostgREST ga JSON-tall), og koden regner på dem
+// (f.eks. distance_km i Distanser-fanen kaller .toFixed()). Parse til number for å matche kontrakten.
+types.setTypeParser(types.builtins.NUMERIC, (val) => (val === null ? null : parseFloat(val)))
 
 export const pool = new Pool({
   connectionString: env.DATABASE_URL,
