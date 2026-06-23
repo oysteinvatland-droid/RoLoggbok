@@ -16,7 +16,7 @@ export function Dashboard() {
   const [typeFilterId, setTypeFilterId] = useState<string | null>(null)
 
   const filtered = boats.filter(b => {
-    const matchName = b.name.toLowerCase().includes(search.toLowerCase())
+    const matchName = b.name.toLowerCase().startsWith(search.toLowerCase())
     const matchType = typeFilterId === null || b.boat_type?.filter_id === typeFilterId
     return matchName && matchType
   })
