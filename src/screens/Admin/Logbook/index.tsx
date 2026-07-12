@@ -1,12 +1,20 @@
 import { useState } from 'react'
 import { format, formatDistanceStrict } from 'date-fns'
 import { nb } from 'date-fns/locale'
-import { useSessionHistory } from '@/hooks/useSessions'
+import { useSessionHistory, useDeleteSession } from '@/hooks/useSessions'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
-import type { SessionWithDetails } from '@/types'
+import { useToast } from '@/components/ui/Toast'
+import type { SessionRower, SessionWithDetails } from '@/types'
+
+/** "1. Ola, 2. Kari" — med sitteplass når den er registrert. */
+function rowersLabel(members: SessionRower[], separator = ', '): string {
+  return members
+    .map(m => (m.seat_number != null ? `${m.seat_number}. ${m.name}` : m.name))
+    .join(separator)
+}
 
 function exportCSV(sessions: SessionWithDetails[]) {
   const headers = [
@@ -22,7 +30,7 @@ function exportCSV(sessions: SessionWithDetails[]) {
       ? String(Math.round((new Date(s.end_time).getTime() - new Date(s.start_time).getTime()) / 60000))
       : '',
     s.boat?.name ?? '',
-    s.members.map(m => m.name).join('; '),
+    rowersLabel(s.members, '; '),
     s.route?.name ?? '',
     s.has_been_coached ? 'Ja' : 'Nei',
     s.incident?.description ?? '',
@@ -42,7 +50,17 @@ function exportCSV(sessions: SessionWithDetails[]) {
   URL.revokeObjectURL(url)
 }
 
-function SessionDetail({ session: s, onClose }: { session: SessionWithDetails; onClose: () => void }) {
+function SessionDetail({
+  session: s,
+  onClose,
+  onDelete,
+  deleting,
+}: {
+  session: SessionWithDetails
+  onClose: () => void
+  onDelete: () => void
+  deleting: boolean
+}) {
   const duration = s.end_time
     ? formatDistanceStrict(new Date(s.start_time), new Date(s.end_time), { locale: nb })
     : null
@@ -53,7 +71,14 @@ function SessionDetail({ session: s, onClose }: { session: SessionWithDetails; o
       onClose={onClose}
       title={`Tur — ${s.boat?.name ?? '—'}`}
       size="sm"
-      footer={<Button variant="secondary" onClick={onClose}>Lukk</Button>}
+      footer={
+        <>
+          <Button variant="danger" onClick={onDelete} loading={deleting} className="mr-auto">
+            Slett tur
+          </Button>
+          <Button variant="secondary" onClick={onClose}>Lukk</Button>
+        </>
+      }
     >
       <dl className="space-y-3 text-sm">
         <Row label="Dato">
@@ -68,7 +93,7 @@ function SessionDetail({ session: s, onClose }: { session: SessionWithDetails; o
         {duration && <Row label="Varighet">{duration}</Row>}
         <Row label="Båt">{s.boat?.name ?? '—'}</Row>
         <Row label="Roere">
-          {s.members.length > 0 ? s.members.map(m => m.name).join(', ') : '—'}
+          {s.members.length > 0 ? rowersLabel(s.members) : '—'}
         </Row>
         {s.route && <Row label="Rute">{s.route.name}{s.route.distance_km ? ` (${s.route.distance_km} km)` : ''}</Row>}
         <Row label="Distanse">
@@ -98,10 +123,24 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export function LogbookAdmin() {
   const { data: sessions = [], isLoading } = useSessionHistory()
+  const deleteSession = useDeleteSession()
+  const { toast } = useToast()
   const [search, setSearch] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [selected, setSelected] = useState<SessionWithDetails | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<SessionWithDetails | null>(null)
+
+  async function handleDelete(s: SessionWithDetails) {
+    try {
+      await deleteSession.mutateAsync(s.id)
+      toast('Tur slettet')
+      setConfirmDelete(null)
+      setSelected(null)
+    } catch {
+      toast('Kunne ikke slette turen', 'error')
+    }
+  }
 
   const filtered = sessions.filter(s => {
     const text = [
@@ -186,7 +225,7 @@ export function LogbookAdmin() {
                     </td>
                     <td className="px-4 py-3 font-medium">{s.boat?.name ?? '—'}</td>
                     <td className="px-4 py-3 text-gray-700">
-                      {s.members.map(m => m.name).join(', ') || '—'}
+                      {rowersLabel(s.members) || '—'}
                     </td>
                     <td className="px-4 py-3 text-gray-600">
                       {s.distance_km != null ? `${s.distance_km} km` : '—'}
@@ -210,7 +249,42 @@ export function LogbookAdmin() {
         </div>
       )}
 
-      {selected && <SessionDetail session={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <SessionDetail
+          session={selected}
+          onClose={() => setSelected(null)}
+          onDelete={() => setConfirmDelete(selected)}
+          deleting={deleteSession.isPending && confirmDelete?.id === selected.id}
+        />
+      )}
+
+      {confirmDelete && (
+        <Modal
+          isOpen
+          onClose={() => setConfirmDelete(null)}
+          title="Slette tur?"
+          size="sm"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setConfirmDelete(null)}>Avbryt</Button>
+              <Button
+                variant="danger"
+                loading={deleteSession.isPending}
+                onClick={() => handleDelete(confirmDelete)}
+              >
+                Slett tur
+              </Button>
+            </>
+          }
+        >
+          <p className="text-sm text-gray-700">
+            Vil du slette turen med{' '}
+            <span className="font-medium">{confirmDelete.boat?.name ?? 'ukjent båt'}</span>
+            {' '}den {format(new Date(confirmDelete.start_time), 'dd.MM.yyyy', { locale: nb })}?
+            Dette kan ikke angres.
+          </p>
+        </Modal>
+      )}
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { format, addMinutes } from 'date-fns'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { useMembers } from '@/hooks/useMembers'
+import { useMembers, useBoatRowers } from '@/hooks/useMembers'
 import { useRoutes } from '@/hooks/useBoats'
 import { useStartSession } from '@/hooks/useSessions'
 import { useToast } from '@/components/ui/Toast'
@@ -39,6 +39,7 @@ export function StartSession({ boat, onClose }: Props) {
   const [comment, setComment] = useState('')
 
   const { data: members = [] } = useMembers()
+  const { data: boatRowers = [] } = useBoatRowers(boat.id)
   const { data: routes = [] } = useRoutes()
   const startMutation = useStartSession()
   const { toast } = useToast()
@@ -156,9 +157,13 @@ export function StartSession({ boat, onClose }: Props) {
             const selectedId = seatSelections[i]
             const selectedMember: Member | undefined = selectedId ? members.find(m => m.id === selectedId) : undefined
             const takenIds = new Set(seatSelections.filter((id, j): id is string => id !== null && j !== i))
-            const filtered = members.filter(m =>
+            const searchTerm = seatSearches[i].trim().toLowerCase()
+            // Standard: kun roere som har brukt båten før (sist brukt øverst).
+            // Ved søk: la brukeren finne hvem som helst (f.eks. ny roer på båten).
+            const source = searchTerm ? members : boatRowers
+            const filtered = source.filter(m =>
               !takenIds.has(m.id) &&
-              m.name.toLowerCase().includes(seatSearches[i].toLowerCase())
+              m.name.toLowerCase().includes(searchTerm)
             )
 
             return (
@@ -185,7 +190,13 @@ export function StartSession({ boat, onClose }: Props) {
                     />
                     <div className="space-y-1 max-h-52 overflow-y-auto">
                       {filtered.length === 0 ? (
-                        <p className="text-xs text-gray-400 text-center py-3">Ingen funnet</p>
+                        <p className="text-xs text-gray-400 text-center py-3">
+                          {searchTerm
+                            ? 'Ingen funnet'
+                            : boatRowers.length === 0
+                              ? 'Ingen har rodd denne båten før — søk etter navn'
+                              : 'Ingen funnet'}
+                        </p>
                       ) : filtered.map(m => (
                         <button
                           key={m.id}

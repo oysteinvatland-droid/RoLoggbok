@@ -37,6 +37,15 @@ export function useAllMembers() {
   })
 }
 
+// Roere som har brukt en gitt båt før, sortert med sist brukt øverst.
+export function useBoatRowers(boatId: string) {
+  return useQuery({
+    queryKey: ['members', CLUB_ID, 'boat-rowers', boatId],
+    queryFn: () => api.get<Member[]>(`/boats/${boatId}/rowers`),
+    staleTime: 30_000,
+  })
+}
+
 export function useCreateMember() {
   const qc = useQueryClient()
   return useMutation({

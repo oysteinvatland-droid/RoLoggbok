@@ -105,6 +105,12 @@ export interface Session {
 export interface SessionMember {
   session_id: string
   member_id: string
+  seat_number: number | null
+}
+
+/** Medlem slik det ligger på en tur — med sitteplassen sin (nr 1, 2, ...). */
+export interface SessionRower extends Member {
+  seat_number: number | null
 }
 
 export interface Incident {
@@ -123,7 +129,7 @@ export interface Incident {
 export interface SessionWithDetails extends Session {
   boat: Boat
   route: Route | null
-  members: Member[]
+  members: SessionRower[]
   incident: Incident | null
 }
 

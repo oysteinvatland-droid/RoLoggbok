@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { env } from '../env'
 import { query, one } from '../db'
-import { requireAuth } from '../auth'
+import { requireAuth, requireAdmin } from '../auth'
 import { SESSION_DETAIL_SELECT } from '../sql'
 
 const startSchema = z.object({
@@ -51,11 +51,12 @@ export async function sessionRoutes(app: FastifyInstance) {
       [id, env.CLUB_ID, b.boat_id, b.route_id ?? null, b.start_time, b.estimated_end_time ?? null, b.comment ?? null],
     )
 
-    for (const memberId of b.member_ids) {
+    // Rekkefølgen i member_ids er sitteplassen i båten (nr 1, 2, ...).
+    for (let i = 0; i < b.member_ids.length; i++) {
       await query(
-        `insert into session_members (session_id, member_id) values ($1, $2)
-         on conflict (session_id, member_id) do nothing`,
-        [id, memberId],
+        `insert into session_members (session_id, member_id, seat_number) values ($1, $2, $3)
+         on conflict (session_id, member_id) do update set seat_number = excluded.seat_number`,
+        [id, b.member_ids[i], i + 1],
       )
     }
 
@@ -82,5 +83,12 @@ export async function sessionRoutes(app: FastifyInstance) {
     }
 
     return { ok: true }
+  })
+
+  // Slett tur. session_members og incidents fjernes automatisk (on delete cascade).
+  app.delete('/sessions/:id', { preHandler: requireAdmin }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    await query(`delete from sessions where id = $1 and club_id = $2`, [id, env.CLUB_ID])
+    return reply.code(204).send()
   })
 }
