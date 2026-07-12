@@ -77,7 +77,9 @@ export function StopSession({ boat, session, onClose }: Props) {
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm space-y-1">
           <p><span className="text-gray-500">Roere: </span>
             <span className="font-medium">
-              {session.members.map(m => m.name).join(', ') || '—'}
+              {session.members
+                .map(m => (m.seat_number != null ? `${m.seat_number}. ${m.name}` : m.name))
+                .join(', ') || '—'}
             </span>
           </p>
           <p><span className="text-gray-500">Startet: </span>

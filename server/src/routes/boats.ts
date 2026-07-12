@@ -37,6 +37,21 @@ export async function boatRoutes(app: FastifyInstance) {
     )
   })
 
+  // Roere som har brukt denne båten før, sortert med sist brukt øverst.
+  app.get('/boats/:id/rowers', { preHandler: requireAuth }, async (req) => {
+    const { id } = req.params as { id: string }
+    return query(
+      `select m.*, max(s.start_time) as last_used
+       from members m
+       join session_members sm on sm.member_id = m.id
+       join sessions s on s.id = sm.session_id
+       where s.club_id = $1 and s.boat_id = $2 and m.archived_at is null
+       group by m.id
+       order by max(s.start_time) desc`,
+      [env.CLUB_ID, id],
+    )
+  })
+
   app.post('/boats', { preHandler: requireAdmin }, async (req) => {
     const b = createSchema.parse(req.body)
     const created = await one<{ id: string }>(

@@ -31,10 +31,13 @@ export const SESSION_DETAIL_SELECT = `
     (select row_to_json(b) from boats  b where b.id = s.boat_id)  as boat,
     (select row_to_json(r) from routes r where r.id = s.route_id) as route,
     coalesce((
-      select json_agg(m order by m.name)
-      from members m
-      join session_members sm on sm.member_id = m.id
-      where sm.session_id = s.id
+      select json_agg(mm order by mm.seat_number nulls last, mm.name)
+      from (
+        select m.*, sm.seat_number
+        from members m
+        join session_members sm on sm.member_id = m.id
+        where sm.session_id = s.id
+      ) mm
     ), '[]'::json) as members,
     (
       select row_to_json(i) from (

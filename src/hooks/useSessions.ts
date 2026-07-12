@@ -92,3 +92,15 @@ export function useStopSession() {
     },
   })
 }
+
+export function useDeleteSession() {
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: (sessionId: string) => api.del(`/sessions/${sessionId}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sessions', CLUB_ID, 'history'] })
+      qc.invalidateQueries({ queryKey: ['dashboard', CLUB_ID] })
+    },
+  })
+}
