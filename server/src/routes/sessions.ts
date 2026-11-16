@@ -34,6 +34,16 @@ export async function sessionRoutes(app: FastifyInstance) {
     )
   })
 
+  // Alle fullførte turer, uten grense — brukes av CSV-eksporten i admin.
+  app.get('/sessions/export', { preHandler: requireAdmin }, async () => {
+    return query(
+      `${SESSION_DETAIL_SELECT}
+       where s.club_id = $1 and s.end_time is not null
+       order by s.start_time desc`,
+      [env.CLUB_ID],
+    )
+  })
+
   // Start tur. Idempotent (klient-UUID) → trygt å replaye fra offline-køen.
   app.post('/sessions', { preHandler: requireAuth }, async (req) => {
     const b = startSchema.parse(req.body)
