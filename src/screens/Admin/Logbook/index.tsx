@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
+import { api } from '@/lib/api'
 import type { SessionRower, SessionWithDetails } from '@/types'
 
 /** "1. Ola, 2. Kari" — med sitteplass når den er registrert. */
@@ -130,6 +131,7 @@ export function LogbookAdmin() {
   const [toDate, setToDate] = useState('')
   const [selected, setSelected] = useState<SessionWithDetails | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<SessionWithDetails | null>(null)
+  const [exporting, setExporting] = useState(false)
 
   async function handleDelete(s: SessionWithDetails) {
     try {
@@ -142,7 +144,7 @@ export function LogbookAdmin() {
     }
   }
 
-  const filtered = sessions.filter(s => {
+  const matches = (s: SessionWithDetails) => {
     const text = [
       s.boat?.name,
       s.route?.name,
@@ -154,14 +156,36 @@ export function LogbookAdmin() {
     const matchFrom = !fromDate || new Date(s.start_time) >= new Date(fromDate)
     const matchTo   = !toDate   || new Date(s.start_time) <= new Date(toDate + 'T23:59:59')
     return matchSearch && matchFrom && matchTo
-  })
+  }
+
+  const filtered = sessions.filter(matches)
+
+  // Visningen viser de siste 200; eksporten henter ALLE turer fra serveren
+  // og bruker de samme filtrene.
+  async function handleExport() {
+    setExporting(true)
+    try {
+      const all = await api.get<SessionWithDetails[]>('/sessions/export')
+      const rows = all.filter(matches)
+      if (rows.length === 0) {
+        toast('Ingen turer å eksportere', 'error')
+        return
+      }
+      exportCSV(rows)
+      toast(`Eksporterte ${rows.length} turer`)
+    } catch {
+      toast('Kunne ikke hente turer for eksport', 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Loggbok</h1>
-        <Button variant="secondary" onClick={() => exportCSV(filtered)} disabled={filtered.length === 0}>
-          Last ned CSV ({filtered.length})
+        <Button variant="secondary" onClick={handleExport} disabled={exporting}>
+          {exporting ? 'Henter turer…' : 'Last ned CSV (alle turer)'}
         </Button>
       </div>
 
